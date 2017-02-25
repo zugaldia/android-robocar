@@ -22,8 +22,9 @@ android {
 }
 
 dependencies {
-    // Android Things
-    provided 'com.google.android.things:androidthings:0.2-devpreview'
+    // Our two libraries
+    compile project(':libhardware')
+    compile project(':libsoftware')
 
     // Android Support Libraries
     compile 'com.android.support:appcompat-v7:25.2.0'
