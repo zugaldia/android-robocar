@@ -1,3 +1,5 @@
+[![Build Status](https://www.bitrise.io/app/c21fc6ddb3fb11ff.svg?token=AMC-tS69ZlV_dtIFQKO2jw&branch=master)](https://www.bitrise.io/app/c21fc6ddb3fb11ff)
+
 # Android Robocar
 
 The home for Android Robocars.
