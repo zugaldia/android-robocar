@@ -21,6 +21,9 @@ android {
 }
 
 dependencies {
+   // JavaCV
+    compile 'org.bytedeco:javacv-platform:1.3.2'
+
     // Testing
     testCompile 'junit:junit:4.12'
 }
