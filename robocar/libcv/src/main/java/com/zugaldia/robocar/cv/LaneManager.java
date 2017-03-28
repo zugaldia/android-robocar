@@ -45,20 +45,16 @@ public class LaneManager {
     return dst;
   }
 
-  public static opencv_core.Mat applyMask(opencv_core.Mat image, opencv_core.MatVector vertices) {
-    opencv_core.Mat mask = opencv_core.Mat.zeros(image.size(), opencv_core.CV_8U).asMat();
-
-    opencv_core.Scalar color = new opencv_core.Scalar(image.channels()); // 3
-    double[] colors = new double[] {
-      255.0, 255.0, 255.0, 255.0,
-      255.0, 255.0, 255.0, 255.0,
-      255.0, 255.0, 255.0, 255.0};
-    color.put(colors, 0, colors.length);
-
-    opencv_imgproc.fillPoly(mask, vertices, color);
-
-    opencv_core.Mat dst = new opencv_core.Mat();
-    opencv_core.bitwise_and(image, mask, dst);
-    return dst;
+  public static opencv_core.Mat doHoughLines(opencv_core.Mat image, double rho, double theta, int threshold, double minLineLength, double maxLineGap) {
+    opencv_core.Mat lines = new opencv_core.Mat();
+    opencv_imgproc.HoughLinesP(image, lines, rho, theta, threshold, minLineLength, maxLineGap);
+    return lines;
   }
+
+  public static void doDrawLine(opencv_core.Mat image, opencv_core.Point from, opencv_core.Point to, opencv_core.Scalar color, int thickness) {
+    int lineType = opencv_core.LINE_8;
+    int shift = 0;
+    opencv_imgproc.line(image, from, to, color, thickness, lineType, shift);
+  }
+
 }
