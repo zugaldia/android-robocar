@@ -12,7 +12,7 @@ public class LaneManagerTest {
 
   @Test
   public void testReadImage() {
-    opencv_core.Mat src = LaneManager.readImage(getResourcePath("/test_images/solidWhiteCurve.jpg"));
+    opencv_core.Mat src = LaneManager.readImage(getResourcePath("/test_images/solidWhiteRight.jpg"));
     assertNotNull(src.data());
     assertEquals(src.size().width(), 960);
     assertEquals(src.size().height(), 540);
@@ -20,37 +20,37 @@ public class LaneManagerTest {
 
   @Test
   public void testGrayscale() {
-    opencv_core.Mat src = LaneManager.readImage(getResourcePath("/test_images/solidWhiteCurve.jpg"));
+    opencv_core.Mat src = LaneManager.readImage(getResourcePath("/test_images/solidWhiteRight.jpg"));
     opencv_core.Mat dst = LaneManager.doGrayscale(src);
     assertNotNull(dst.data());
     assertEquals(dst.size().width(), 960);
     assertEquals(dst.size().height(), 540);
-    assertTrue(LaneManager.writeImage("/tmp/solidWhiteCurve_grayscale.jpg", dst));
+    assertTrue(LaneManager.writeImage("/tmp/solidWhiteRight_grayscale.jpg", dst));
   }
 
   @Test
   public void testCanny() {
-    opencv_core.Mat src = LaneManager.readImage(getResourcePath("/test_images/solidWhiteCurve.jpg"));
+    opencv_core.Mat src = LaneManager.readImage(getResourcePath("/test_images/solidWhiteRight.jpg"));
     opencv_core.Mat edges = LaneManager.doCanny(src, 50, 150);
     assertNotNull(edges.data());
     assertEquals(edges.size().width(), 960);
     assertEquals(edges.size().height(), 540);
-    assertTrue(LaneManager.writeImage("/tmp/solidWhiteCurve_canny.jpg", edges));
+    assertTrue(LaneManager.writeImage("/tmp/solidWhiteRight_canny.jpg", edges));
   }
 
   @Test
   public void testGaussianBlur() {
-    opencv_core.Mat src = LaneManager.readImage(getResourcePath("/test_images/solidWhiteCurve.jpg"));
+    opencv_core.Mat src = LaneManager.readImage(getResourcePath("/test_images/solidWhiteRight.jpg"));
     opencv_core.Mat gaussian = LaneManager.doGaussianBlur(src, 25);
     assertNotNull(gaussian.data());
     assertEquals(gaussian.size().width(), 960);
     assertEquals(gaussian.size().height(), 540);
-    assertTrue(LaneManager.writeImage("/tmp/solidWhiteCurve_gaussian.jpg", gaussian));
+    assertTrue(LaneManager.writeImage("/tmp/solidWhiteRight_gaussian.jpg", gaussian));
   }
 
   @Test
   public void testHoughLines() {
-    opencv_core.Mat src = LaneManager.readImage(getResourcePath("/test_images/solidWhiteCurve.jpg"));
+    opencv_core.Mat src = LaneManager.readImage(getResourcePath("/test_images/solidWhiteRight.jpg"));
     opencv_core.Mat gray = LaneManager.doGrayscale(src);
     double rho = 1;
     double theta = Math.PI / 180;
@@ -76,18 +76,18 @@ public class LaneManagerTest {
 
   @Test
   public void testDrawLine() {
-    opencv_core.Mat src = LaneManager.readImage(getResourcePath("/test_images/solidWhiteCurve.jpg"));
+    opencv_core.Mat src = LaneManager.readImage(getResourcePath("/test_images/solidWhiteRight.jpg"));
     opencv_core.Scalar color = new opencv_core.Scalar(255, 0, 0, 0); // Blue (BGR)
     LaneManager.doDrawLine(src,
       new opencv_core.Point(0, 0), // top left
       new opencv_core.Point(src.size().width(), src.size().height()), // bottom right
       color, 5);
-    assertTrue(LaneManager.writeImage("/tmp/solidWhiteCurve_line.jpg", src));
+    assertTrue(LaneManager.writeImage("/tmp/solidWhiteRight_line.jpg", src));
   }
 
   @Test
   public void testLaneDetection() {
-    opencv_core.Mat original = LaneManager.readImage(getResourcePath("/test_images/solidWhiteCurve.jpg"));
+    opencv_core.Mat original = LaneManager.readImage(getResourcePath("/test_images/solidWhiteRight.jpg"));
     opencv_core.Mat grayscale = LaneManager.doGrayscale(original);
     opencv_core.Mat gaussian = LaneManager.doGaussianBlur(grayscale, 5);
     opencv_core.Mat edges = LaneManager.doCanny(gaussian, 50, 150);
@@ -104,7 +104,7 @@ public class LaneManagerTest {
       }
     }
 
-    assertTrue(LaneManager.writeImage("/tmp/solidWhiteCurve_lanes.jpg", original));
+    assertTrue(LaneManager.writeImage("/tmp/solidWhiteRight_lanes.jpg", original));
   }
 
   private String getResourcePath(String filename) {
