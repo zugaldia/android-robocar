@@ -75,6 +75,13 @@ public class LaneManagerTest {
   }
 
   @Test
+  public void testApplyMask() {
+    opencv_core.Mat src = LaneManager.readImage(getResourcePath("/test_images/solidWhiteRight.jpg"));
+    opencv_core.Mat masked = LaneManager.applyMask(src);
+    assertTrue(LaneManager.writeImage("/tmp/solidWhiteRight_masked.jpg", masked));
+  }
+
+  @Test
   public void testDrawLine() {
     opencv_core.Mat src = LaneManager.readImage(getResourcePath("/test_images/solidWhiteRight.jpg"));
     opencv_core.Scalar color = new opencv_core.Scalar(255, 0, 0, 0); // Blue (BGR)

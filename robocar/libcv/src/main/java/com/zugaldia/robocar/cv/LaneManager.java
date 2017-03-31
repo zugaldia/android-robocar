@@ -51,6 +51,24 @@ public class LaneManager {
     return lines;
   }
 
+  /**
+   * Applies an image mask. Only keeps the region of the image defined by the
+   * polygon formed from `vertices`. The rest of the image is set to black.
+   */
+  public static opencv_core.Mat applyMask(opencv_core.Mat image) {
+    opencv_core.Mat mask = new opencv_core.Mat(image.size(), image.type());
+
+    // TODO: figure out how to set up and expose as method parameter
+    // Array of polygons where each polygon is represented as an array of points
+    opencv_core.MatVector points = new opencv_core.MatVector();
+    opencv_core.Scalar white = new opencv_core.Scalar(255, 255, 255, 0);
+    opencv_imgproc.fillPoly(mask, points, white);
+
+    opencv_core.Mat masked = new opencv_core.Mat();
+    opencv_core.bitwise_and(image, mask, masked);
+    return masked;
+  }
+
   public static void doDrawLine(opencv_core.Mat image, opencv_core.Point from, opencv_core.Point to, opencv_core.Scalar color, int thickness) {
     int lineType = opencv_core.LINE_8;
     int shift = 0;
