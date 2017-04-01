@@ -9,10 +9,13 @@ import com.zugaldia.robocar.hardware.adafruit2348.AdafruitDCMotor;
 import com.zugaldia.robocar.hardware.adafruit2348.AdafruitMotorHat;
 import com.zugaldia.robocar.software.controller.nes30.NES30Listener;
 import com.zugaldia.robocar.software.controller.nes30.NES30Manager;
+import com.zugaldia.robocar.software.webserver.LocalWebServer;
+
+import java.io.IOException;
+
+import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity implements NES30Listener {
-
-  private static final String LOG_TAG = MainActivity.class.getSimpleName();
 
   // Set the speed, from 0 (off) to 255 (max speed)
   private static final int MOTOR_SPEED = 250;
@@ -44,6 +47,18 @@ public class MainActivity extends AppCompatActivity implements NES30Listener {
     motorBackLeft.setSpeed(MOTOR_SPEED);
     motorBackRight = motorHat.getMotor(1);
     motorBackRight.setSpeed(MOTOR_SPEED);
+
+    // Local web server
+    setupWebServer();
+  }
+
+  private void setupWebServer() {
+    LocalWebServer localWebServer = new LocalWebServer();
+    try {
+      localWebServer.start();
+    } catch (IOException e) {
+      Timber.e(e, "Failed to start local web server.");
+    }
   }
 
   @Override
@@ -114,7 +129,7 @@ public class MainActivity extends AppCompatActivity implements NES30Listener {
   }
 
   private void moveForward() {
-    Log.d(LOG_TAG, "Moving forward.");
+    Timber.d("Moving forward.");
     motorFrontLeft.run(AdafruitMotorHat.FORWARD);
     motorFrontRight.run(AdafruitMotorHat.FORWARD);
     motorBackLeft.run(AdafruitMotorHat.FORWARD);
@@ -122,7 +137,7 @@ public class MainActivity extends AppCompatActivity implements NES30Listener {
   }
 
   private void moveBackward() {
-    Log.d(LOG_TAG, "Moving backward.");
+    Timber.d("Moving backward.");
     motorFrontLeft.run(AdafruitMotorHat.BACKWARD);
     motorFrontRight.run(AdafruitMotorHat.BACKWARD);
     motorBackLeft.run(AdafruitMotorHat.BACKWARD);
@@ -130,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements NES30Listener {
   }
 
   private void turnLeft() {
-    Log.d(LOG_TAG, "Turning left.");
+    Timber.d("Turning left.");
     motorFrontLeft.run(AdafruitMotorHat.BACKWARD);
     motorFrontRight.run(AdafruitMotorHat.FORWARD);
     motorBackLeft.run(AdafruitMotorHat.BACKWARD);
@@ -138,7 +153,7 @@ public class MainActivity extends AppCompatActivity implements NES30Listener {
   }
 
   private void turnRight() {
-    Log.d(LOG_TAG, "Turning right.");
+    Timber.d("Turning right.");
     motorFrontLeft.run(AdafruitMotorHat.FORWARD);
     motorFrontRight.run(AdafruitMotorHat.BACKWARD);
     motorBackLeft.run(AdafruitMotorHat.FORWARD);
@@ -146,7 +161,7 @@ public class MainActivity extends AppCompatActivity implements NES30Listener {
   }
 
   private void release() {
-    Log.d(LOG_TAG, "Release.");
+    Timber.d("Release.");
     motorFrontLeft.run(AdafruitMotorHat.RELEASE);
     motorFrontRight.run(AdafruitMotorHat.RELEASE);
     motorBackLeft.run(AdafruitMotorHat.RELEASE);
