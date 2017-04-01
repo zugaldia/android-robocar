@@ -12,6 +12,8 @@ import org.bytedeco.javacpp.opencv_imgproc;
  */
 public class LaneManager {
 
+  private static final opencv_core.Scalar WHITE = new opencv_core.Scalar(255, 255, 255, 0);
+
   public static opencv_core.Mat readImage(String filename) {
     opencv_core.Mat image = opencv_imgcodecs.imread(filename);
     if (image.data() == null) {
@@ -49,6 +51,23 @@ public class LaneManager {
     opencv_core.Mat lines = new opencv_core.Mat();
     opencv_imgproc.HoughLinesP(image, lines, rho, theta, threshold, minLineLength, maxLineGap);
     return lines;
+  }
+
+  /**
+   * Applies an image mask. Only keeps the region of the image defined by the
+   * polygon formed from `vertices`. The rest of the image is set to black.
+   */
+  public static opencv_core.Mat applyMask(opencv_core.Mat image, int[] points) {
+    opencv_core.Mat mask = new opencv_core.Mat(image.size(), image.type());
+
+    // Array of polygons where each polygon is represented as an array of points
+    opencv_core.Point polygon = new opencv_core.Point();
+    polygon.put(points, 0, points.length);
+    opencv_imgproc.fillPoly(mask, polygon, new int[] {points.length / 2}, 1, WHITE);
+
+    opencv_core.Mat masked = new opencv_core.Mat(image.size(), image.type());
+    opencv_core.bitwise_and(image, mask, masked);
+    return masked;
   }
 
   public static void doDrawLine(opencv_core.Mat image, opencv_core.Point from, opencv_core.Point to, opencv_core.Scalar color, int thickness) {

@@ -75,6 +75,17 @@ public class LaneManagerTest {
   }
 
   @Test
+  public void testApplyMask() {
+    opencv_core.Mat src = LaneManager.readImage(getResourcePath("/test_images/solidWhiteRight.jpg"));
+    int[] points = new int[] {
+      0, src.size().height(), // bottom left
+      src.size().width() / 2, src.size().height() / 2, // middle point
+      src.size().width(), src.size().height()}; // // bottom right
+    opencv_core.Mat masked = LaneManager.applyMask(src, points);
+    assertTrue(LaneManager.writeImage("/tmp/solidWhiteRight_masked.jpg", masked));
+  }
+
+  @Test
   public void testDrawLine() {
     opencv_core.Mat src = LaneManager.readImage(getResourcePath("/test_images/solidWhiteRight.jpg"));
     opencv_core.Scalar color = new opencv_core.Scalar(255, 0, 0, 0); // Blue (BGR)
@@ -97,10 +108,10 @@ public class LaneManagerTest {
     IntIndexer linesIndexer = lines.createIndexer();
     for (int i = 0; i < linesIndexer.rows(); i++) {
       for (int j = 0; j < linesIndexer.cols(); j++) {
-          LaneManager.doDrawLine(original,
-            new opencv_core.Point(linesIndexer.get(i, j, 0), linesIndexer.get(i, j, 1)),
-            new opencv_core.Point(linesIndexer.get(i, j, 2), linesIndexer.get(i, j, 3)),
-            color, 5);
+        LaneManager.doDrawLine(original,
+          new opencv_core.Point(linesIndexer.get(i, j, 0), linesIndexer.get(i, j, 1)),
+          new opencv_core.Point(linesIndexer.get(i, j, 2), linesIndexer.get(i, j, 3)),
+          color, 5);
       }
     }
 
