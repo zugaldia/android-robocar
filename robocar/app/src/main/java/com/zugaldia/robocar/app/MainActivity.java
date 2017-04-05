@@ -1,8 +1,7 @@
 package com.zugaldia.robocar.app;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
+import android.support.v7.app.AppCompatActivity;
 import android.view.KeyEvent;
 
 import com.zugaldia.robocar.hardware.adafruit2348.AdafruitDCMotor;
@@ -10,12 +9,18 @@ import com.zugaldia.robocar.hardware.adafruit2348.AdafruitMotorHat;
 import com.zugaldia.robocar.software.controller.nes30.NES30Listener;
 import com.zugaldia.robocar.software.controller.nes30.NES30Manager;
 import com.zugaldia.robocar.software.webserver.LocalWebServer;
+import com.zugaldia.robocar.software.webserver.RequestListener;
+import com.zugaldia.robocar.software.webserver.models.RobocarMove;
+import com.zugaldia.robocar.software.webserver.models.RobocarResponse;
+import com.zugaldia.robocar.software.webserver.models.RobocarStatus;
 
 import java.io.IOException;
 
+import fi.iki.elonen.NanoHTTPD;
 import timber.log.Timber;
 
-public class MainActivity extends AppCompatActivity implements NES30Listener {
+public class MainActivity extends AppCompatActivity
+  implements NES30Listener, RequestListener {
 
   // Set the speed, from 0 (off) to 255 (max speed)
   private static final int MOTOR_SPEED = 250;
@@ -53,7 +58,7 @@ public class MainActivity extends AppCompatActivity implements NES30Listener {
   }
 
   private void setupWebServer() {
-    LocalWebServer localWebServer = new LocalWebServer();
+    LocalWebServer localWebServer = new LocalWebServer(this);
     try {
       localWebServer.start();
     } catch (IOException e) {
@@ -167,4 +172,20 @@ public class MainActivity extends AppCompatActivity implements NES30Listener {
     motorBackLeft.run(AdafruitMotorHat.RELEASE);
     motorBackRight.run(AdafruitMotorHat.RELEASE);
   }
+
+  @Override
+  public void onRequest(NanoHTTPD.IHTTPSession session) {
+    LocalWebServer.logSession(session);
+  }
+
+  @Override
+  public RobocarStatus onStatus() {
+    return new RobocarStatus(200, "OK");
+  }
+
+  @Override
+  public RobocarResponse onMove(RobocarMove move) {
+    return new RobocarResponse(200, "TODO");
+  }
+
 }

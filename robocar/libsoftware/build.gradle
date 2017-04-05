@@ -34,6 +34,9 @@ dependencies {
     // Web server for local network comms
     compile 'org.nanohttpd:nanohttpd-webserver:2.3.1'
 
+    // Retrofit client
+    compile 'com.squareup.retrofit2:converter-gson:2.2.0'
+
     // Testing
     testCompile 'junit:junit:4.12'
 }
