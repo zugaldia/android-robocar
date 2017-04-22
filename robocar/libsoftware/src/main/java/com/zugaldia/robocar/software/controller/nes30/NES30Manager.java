@@ -1,7 +1,6 @@
 package com.zugaldia.robocar.software.controller.nes30;
 
 import android.support.annotation.IntDef;
-import android.util.Log;
 import android.view.KeyEvent;
 
 import java.lang.annotation.Retention;
@@ -10,13 +9,13 @@ import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
 
+import timber.log.Timber;
+
 /**
  * Manage NES30 controller key events
  */
 
 public class NES30Manager implements KeyEvent.Callback {
-
-  private final static String LOG_TAG = NES30Manager.class.getSimpleName();
 
   @Retention(RetentionPolicy.SOURCE)
   @IntDef( {BUTTON_LEFT_CODE, BUTTON_RIGHT_CODE, BUTTON_UP_CODE, BUTTON_DOWN_CODE,
@@ -92,14 +91,14 @@ public class NES30Manager implements KeyEvent.Callback {
   @Override
   public boolean onKeyLongPress(int keyCode, KeyEvent event) {
     // NOTE: Doesn't seem to be triggered
-    Log.d(LOG_TAG, String.format("onKeyLongPress: %d", keyCode));
+    Timber.d("onKeyLongPress: %d", keyCode);
     return false;
   }
 
   @Override
   public boolean onKeyMultiple(int keyCode, int count, KeyEvent event) {
     // NOTE: Doesn't seem to be triggered
-    Log.d(LOG_TAG, String.format("onKeyMultiple: %d", keyCode));
+    Timber.d("onKeyMultiple: %d", keyCode);
     return false;
   }
 

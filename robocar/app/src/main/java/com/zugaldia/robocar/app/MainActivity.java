@@ -6,6 +6,7 @@ import android.view.KeyEvent;
 
 import com.zugaldia.robocar.hardware.adafruit2348.AdafruitDCMotor;
 import com.zugaldia.robocar.hardware.adafruit2348.AdafruitMotorHat;
+import com.zugaldia.robocar.software.controller.nes30.NES30Connection;
 import com.zugaldia.robocar.software.controller.nes30.NES30Listener;
 import com.zugaldia.robocar.software.controller.nes30.NES30Manager;
 import com.zugaldia.robocar.software.webserver.LocalWebServer;
@@ -23,9 +24,10 @@ public class MainActivity extends AppCompatActivity
   implements NES30Listener, RequestListener {
 
   // Set the speed, from 0 (off) to 255 (max speed)
-  private static final int MOTOR_SPEED = 250;
+  private static final int MOTOR_SPEED = 255;
 
   private NES30Manager nes30Manager;
+  private NES30Connection nes30Connection;
   private boolean isMoving = false;
 
   private AdafruitMotorHat motorHat;
@@ -44,17 +46,20 @@ public class MainActivity extends AppCompatActivity
 
     // Motors
     motorHat = new AdafruitMotorHat();
-    motorFrontLeft = motorHat.getMotor(4);
+    motorFrontLeft = motorHat.getMotor(1);
     motorFrontLeft.setSpeed(MOTOR_SPEED);
-    motorFrontRight = motorHat.getMotor(3);
-    motorFrontRight.setSpeed(MOTOR_SPEED);
     motorBackLeft = motorHat.getMotor(2);
     motorBackLeft.setSpeed(MOTOR_SPEED);
-    motorBackRight = motorHat.getMotor(1);
+    motorFrontRight = motorHat.getMotor(3);
+    motorFrontRight.setSpeed(MOTOR_SPEED);
+    motorBackRight = motorHat.getMotor(4);
     motorBackRight.setSpeed(MOTOR_SPEED);
 
     // Local web server
     setupWebServer();
+    
+    // NES30 BT connection
+    setupBluetooth();
   }
 
   private void setupWebServer() {
@@ -66,11 +71,23 @@ public class MainActivity extends AppCompatActivity
     }
   }
 
+  private void setupBluetooth() {
+    nes30Connection = new NES30Connection(
+            this, RobocarConstants.NES30_NAME, RobocarConstants.NES30_MAC_ADDRESS);
+
+    Timber.d("BT status: %b", nes30Connection.isEnabled());
+    Timber.d("Paired devices: %d", nes30Connection.getPairedDevices().size());
+    if (!nes30Connection.isPaired()) {
+      Timber.d("Start discovery: %b", nes30Connection.startDiscovery());
+    }
+  }
+
   @Override
   protected void onDestroy() {
     super.onDestroy();
     release();
     motorHat.close();
+    nes30Connection.cancelDiscovery();
   }
 
   /*
@@ -136,32 +153,32 @@ public class MainActivity extends AppCompatActivity
   private void moveForward() {
     Timber.d("Moving forward.");
     motorFrontLeft.run(AdafruitMotorHat.FORWARD);
-    motorFrontRight.run(AdafruitMotorHat.FORWARD);
-    motorBackLeft.run(AdafruitMotorHat.FORWARD);
+    motorFrontRight.run(AdafruitMotorHat.BACKWARD);
+    motorBackLeft.run(AdafruitMotorHat.BACKWARD);
     motorBackRight.run(AdafruitMotorHat.FORWARD);
   }
 
   private void moveBackward() {
     Timber.d("Moving backward.");
     motorFrontLeft.run(AdafruitMotorHat.BACKWARD);
-    motorFrontRight.run(AdafruitMotorHat.BACKWARD);
-    motorBackLeft.run(AdafruitMotorHat.BACKWARD);
+    motorFrontRight.run(AdafruitMotorHat.FORWARD);
+    motorBackLeft.run(AdafruitMotorHat.FORWARD);
     motorBackRight.run(AdafruitMotorHat.BACKWARD);
   }
 
   private void turnLeft() {
     Timber.d("Turning left.");
     motorFrontLeft.run(AdafruitMotorHat.BACKWARD);
-    motorFrontRight.run(AdafruitMotorHat.FORWARD);
-    motorBackLeft.run(AdafruitMotorHat.BACKWARD);
+    motorFrontRight.run(AdafruitMotorHat.BACKWARD);
+    motorBackLeft.run(AdafruitMotorHat.FORWARD);
     motorBackRight.run(AdafruitMotorHat.FORWARD);
   }
 
   private void turnRight() {
     Timber.d("Turning right.");
     motorFrontLeft.run(AdafruitMotorHat.FORWARD);
-    motorFrontRight.run(AdafruitMotorHat.BACKWARD);
-    motorBackLeft.run(AdafruitMotorHat.FORWARD);
+    motorFrontRight.run(AdafruitMotorHat.FORWARD);
+    motorBackLeft.run(AdafruitMotorHat.BACKWARD);
     motorBackRight.run(AdafruitMotorHat.BACKWARD);
   }
 
