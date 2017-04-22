@@ -28,6 +28,9 @@ dependencies {
     // Android Things
     provided 'com.google.android.things:androidthings:0.3-devpreview'
 
+    // Logging
+    compile 'com.jakewharton.timber:timber:4.5.1'
+
     // Testing
     testCompile 'junit:junit:4.12'
 }

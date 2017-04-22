@@ -1,11 +1,11 @@
 package com.zugaldia.robocar.hardware.adafruit2348;
 
-import android.util.Log;
-
 import com.google.android.things.pio.I2cDevice;
 import com.google.android.things.pio.PeripheralManagerService;
 
 import java.io.IOException;
+
+import timber.log.Timber;
 
 /**
  * A port of `Adafruit_PWM_Servo_Driver` (Adafruit PCA9685 16-Channel PWM Servo
@@ -17,8 +17,6 @@ import java.io.IOException;
  */
 
 public class AdafruitPwm {
-
-  private static final String LOG_TAG = AdafruitPwm.class.getSimpleName();
 
   public static final String I2C_DEVICE_NAME = "I2C1";
   public static final int I2C_ADDRESS = 0x60;
@@ -56,11 +54,11 @@ public class AdafruitPwm {
   public AdafruitPwm(String deviceName, int address, boolean debug) {
     try {
       // Attempt to access the I2C device
-      Log.d(LOG_TAG, String.format("Connecting to I2C device %s @ 0x%02X.", deviceName, address));
+      Timber.d("Connecting to I2C device %s @ 0x%02X.", deviceName, address);
       PeripheralManagerService manager = new PeripheralManagerService();
       i2c = manager.openI2cDevice(deviceName, address);
     } catch (IOException e) {
-      Log.w(LOG_TAG, "Unable to access I2C device:", e);
+      Timber.w(e, "Unable to access I2C device.");
     }
 
     this.debug = debug;
@@ -69,7 +67,7 @@ public class AdafruitPwm {
 
   private void reset() {
     if (debug) {
-      Log.d(LOG_TAG, "Resetting PCA9685 MODE1 (without SLEEP) and MODE2.");
+      Timber.d("Resetting PCA9685 MODE1 (without SLEEP) and MODE2.");
     }
 
     setAllPWM(0, 0);
@@ -89,7 +87,7 @@ public class AdafruitPwm {
         i2c.close();
         i2c = null;
       } catch (IOException e) {
-        Log.w(LOG_TAG, "Unable to close I2C device:", e);
+        Timber.w(e, "Unable to close I2C device.");
       }
     }
   }
@@ -103,13 +101,13 @@ public class AdafruitPwm {
     prescaleval /= (float) freq;
     prescaleval -= 1.0;
     if (debug) {
-      Log.d(LOG_TAG, String.format("Setting PWM frequency to %d Hz", freq));
-      Log.d(LOG_TAG, String.format("Estimated pre-scale: %f", prescaleval));
+      Timber.d("Setting PWM frequency to %d Hz", freq);
+      Timber.d("Estimated pre-scale: %f", prescaleval);
     }
 
     double prescale = Math.floor(prescaleval + 0.5);
     if (debug) {
-      Log.d(LOG_TAG, String.format("Final pre-scale: %f", prescale));
+      Timber.d("Final pre-scale: %f", prescale);
     }
 
     byte oldmode = readRegByteWrapped(__MODE1);
@@ -145,7 +143,7 @@ public class AdafruitPwm {
     try {
       Thread.sleep((long) (seconds * 1000));
     } catch (InterruptedException e) {
-      Log.e(LOG_TAG, "sleepWrapped failed: " + e.getMessage());
+      Timber.e(e, "sleepWrapped failed.");
     }
   }
 
@@ -153,12 +151,12 @@ public class AdafruitPwm {
     try {
       i2c.writeRegByte(reg, data);
     } catch (IOException e) {
-      Log.e(LOG_TAG, String.format("writeRegByte to 0x%02X failed: %s", reg, e.getMessage()));
+      Timber.e(e, "writeRegByte to 0x%02X failed: %s", reg);
       return;
     }
 
     if (debug) {
-      Log.d(LOG_TAG, String.format("Wrote to register 0x%02X: 0x%02X", reg, data));
+      Timber.d("Wrote to register 0x%02X: 0x%02X", reg, data);
     }
   }
 
@@ -168,11 +166,11 @@ public class AdafruitPwm {
     try {
       data = i2c.readRegByte(reg);
     } catch (IOException e) {
-      Log.e(LOG_TAG, String.format("readRegByte from 0x%02X failed: %s", reg, e.getMessage()));
+      Timber.d(e, "readRegByte from 0x%02X failed: %s", reg);
     }
 
     if (debug) {
-      Log.d(LOG_TAG, String.format("Read from register 0x%02X: 0x%02X", reg, data));
+      Timber.d("Read from register 0x%02X: 0x%02X", reg, data);
     }
 
     return data;
