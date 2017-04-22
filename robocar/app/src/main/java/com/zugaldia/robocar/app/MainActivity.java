@@ -15,7 +15,7 @@ public class MainActivity extends AppCompatActivity implements NES30Listener {
   private static final String LOG_TAG = MainActivity.class.getSimpleName();
 
   // Set the speed, from 0 (off) to 255 (max speed)
-  private static final int MOTOR_SPEED = 250;
+  private static final int MOTOR_SPEED = 255;
 
   private NES30Manager nes30Manager;
   private boolean isMoving = false;
@@ -36,13 +36,13 @@ public class MainActivity extends AppCompatActivity implements NES30Listener {
 
     // Motors
     motorHat = new AdafruitMotorHat();
-    motorFrontLeft = motorHat.getMotor(4);
+    motorFrontLeft = motorHat.getMotor(1);
     motorFrontLeft.setSpeed(MOTOR_SPEED);
-    motorFrontRight = motorHat.getMotor(3);
-    motorFrontRight.setSpeed(MOTOR_SPEED);
     motorBackLeft = motorHat.getMotor(2);
     motorBackLeft.setSpeed(MOTOR_SPEED);
-    motorBackRight = motorHat.getMotor(1);
+    motorFrontRight = motorHat.getMotor(3);
+    motorFrontRight.setSpeed(MOTOR_SPEED);
+    motorBackRight = motorHat.getMotor(4);
     motorBackRight.setSpeed(MOTOR_SPEED);
   }
 
@@ -116,32 +116,32 @@ public class MainActivity extends AppCompatActivity implements NES30Listener {
   private void moveForward() {
     Log.d(LOG_TAG, "Moving forward.");
     motorFrontLeft.run(AdafruitMotorHat.FORWARD);
-    motorFrontRight.run(AdafruitMotorHat.FORWARD);
-    motorBackLeft.run(AdafruitMotorHat.FORWARD);
+    motorFrontRight.run(AdafruitMotorHat.BACKWARD);
+    motorBackLeft.run(AdafruitMotorHat.BACKWARD);
     motorBackRight.run(AdafruitMotorHat.FORWARD);
   }
 
   private void moveBackward() {
     Log.d(LOG_TAG, "Moving backward.");
     motorFrontLeft.run(AdafruitMotorHat.BACKWARD);
-    motorFrontRight.run(AdafruitMotorHat.BACKWARD);
-    motorBackLeft.run(AdafruitMotorHat.BACKWARD);
+    motorFrontRight.run(AdafruitMotorHat.FORWARD);
+    motorBackLeft.run(AdafruitMotorHat.FORWARD);
     motorBackRight.run(AdafruitMotorHat.BACKWARD);
   }
 
   private void turnLeft() {
     Log.d(LOG_TAG, "Turning left.");
     motorFrontLeft.run(AdafruitMotorHat.BACKWARD);
-    motorFrontRight.run(AdafruitMotorHat.FORWARD);
-    motorBackLeft.run(AdafruitMotorHat.BACKWARD);
+    motorFrontRight.run(AdafruitMotorHat.BACKWARD);
+    motorBackLeft.run(AdafruitMotorHat.FORWARD);
     motorBackRight.run(AdafruitMotorHat.FORWARD);
   }
 
   private void turnRight() {
     Log.d(LOG_TAG, "Turning right.");
     motorFrontLeft.run(AdafruitMotorHat.FORWARD);
-    motorFrontRight.run(AdafruitMotorHat.BACKWARD);
-    motorBackLeft.run(AdafruitMotorHat.FORWARD);
+    motorFrontRight.run(AdafruitMotorHat.FORWARD);
+    motorBackLeft.run(AdafruitMotorHat.BACKWARD);
     motorBackRight.run(AdafruitMotorHat.BACKWARD);
   }
 
