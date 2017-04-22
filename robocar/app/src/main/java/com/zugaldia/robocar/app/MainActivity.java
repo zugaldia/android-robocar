@@ -1,5 +1,6 @@
 package com.zugaldia.robocar.app;
 
+import android.bluetooth.BluetoothDevice;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.KeyEvent;
@@ -77,8 +78,11 @@ public class MainActivity extends AppCompatActivity
 
     Timber.d("BT status: %b", nes30Connection.isEnabled());
     Timber.d("Paired devices: %d", nes30Connection.getPairedDevices().size());
-    if (!nes30Connection.isPaired()) {
-      Timber.d("Start discovery: %b", nes30Connection.startDiscovery());
+    BluetoothDevice nes30device = nes30Connection.isPaired();
+    if (nes30device == null) {
+      Timber.d("Starting discovery: %b", nes30Connection.startDiscovery());
+    } else {
+      Timber.d("Creating bond: %b", nes30Connection.createBond(nes30device));
     }
   }
 
