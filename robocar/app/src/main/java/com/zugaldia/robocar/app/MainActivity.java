@@ -1,14 +1,17 @@
 package com.zugaldia.robocar.app;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
 
 import com.zugaldia.robocar.hardware.adafruit2348.AdafruitDCMotor;
 import com.zugaldia.robocar.hardware.adafruit2348.AdafruitMotorHat;
+import com.zugaldia.robocar.software.controller.nes30.NES30Connection;
 import com.zugaldia.robocar.software.controller.nes30.NES30Listener;
 import com.zugaldia.robocar.software.controller.nes30.NES30Manager;
+
+import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity implements NES30Listener {
 
@@ -18,6 +21,7 @@ public class MainActivity extends AppCompatActivity implements NES30Listener {
   private static final int MOTOR_SPEED = 255;
 
   private NES30Manager nes30Manager;
+  private NES30Connection nes30Connection;
   private boolean isMoving = false;
 
   private AdafruitMotorHat motorHat;
@@ -44,6 +48,20 @@ public class MainActivity extends AppCompatActivity implements NES30Listener {
     motorFrontRight.setSpeed(MOTOR_SPEED);
     motorBackRight = motorHat.getMotor(4);
     motorBackRight.setSpeed(MOTOR_SPEED);
+
+    // NES30 BT connection
+    setupBluetooth();
+  }
+
+  private void setupBluetooth() {
+    nes30Connection = new NES30Connection(
+            this, RobocarConstants.NES30_NAME, RobocarConstants.NES30_MAC_ADDRESS);
+
+    Timber.d("BT status: %b", nes30Connection.isEnabled());
+    Timber.d("Paired devices: %d", nes30Connection.getPairedDevices().size());
+    if (!nes30Connection.isPaired()) {
+      Timber.d("Start discovery: %b", nes30Connection.startDiscovery());
+    }
   }
 
   @Override
@@ -51,6 +69,7 @@ public class MainActivity extends AppCompatActivity implements NES30Listener {
     super.onDestroy();
     release();
     motorHat.close();
+    nes30Connection.cancelDiscovery();
   }
 
   /*
