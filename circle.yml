@@ -1,4 +1,6 @@
 test:
+    pre:
+        - echo y | android update sdk --no-ui --all --filter "build-tools;25.0.2"
     override:
         - cd robocar; ./gradlew test
         - cd robocar; ./gradlew assembleDebug
