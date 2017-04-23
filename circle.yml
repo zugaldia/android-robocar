@@ -1,0 +1,5 @@
+test:
+    override:
+        - cd robocar; ./gradlew test
+        - cd robocar; ./gradlew assembleDebug
+        - cp -r robocar/app/build/outputs/apk $CIRCLE_ARTIFACTS
