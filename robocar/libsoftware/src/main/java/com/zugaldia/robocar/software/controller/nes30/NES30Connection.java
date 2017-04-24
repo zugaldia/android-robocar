@@ -43,15 +43,15 @@ public class NES30Connection {
         return bluetoothAdapter.getBondedDevices();
     }
 
-    public boolean isPaired() {
+    public BluetoothDevice isPaired() {
         Set<BluetoothDevice> pairedDevices = getPairedDevices();
         for (BluetoothDevice pairedDevice: pairedDevices) {
             if (isKnownDevice(pairedDevice.getName(), pairedDevice.getAddress())) {
-                return true;
+                return pairedDevice;
             }
         }
 
-        return false;
+        return null;
     }
 
     public boolean startDiscovery() {
@@ -103,9 +103,10 @@ public class NES30Connection {
         return false;
     }
 
-    private void createBond(BluetoothDevice device) {
-        Timber.d("Creating bond with: %s/%s/%b",
-                device.getName(), device.getAddress(), device.createBond());
+    public boolean createBond(BluetoothDevice device) {
+        boolean result = device.createBond();
+        Timber.d("Creating bond with: %s/%s/%b", device.getName(), device.getAddress(), result);
+        return result;
     }
 
 }

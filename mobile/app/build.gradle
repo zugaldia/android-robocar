@@ -6,7 +6,7 @@ android {
     buildToolsVersion "25.0.2"
 
     defaultConfig {
-        applicationId "com.zugaldia.robocar.app"
+        applicationId "com.zugaldia.robocar.mobile"
         minSdkVersion 24
         targetSdkVersion 25
         versionCode 1
@@ -21,32 +21,24 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-
-    splits {
-        abi {
-            // Enables building multiple APKs per ABI.
-            enable true
-
-            // Resets the list of ABIs that Gradle should create APKs for to none.
-            reset()
-
-            // Specifies a list of ABIs that Gradle should create APKs for (Raspberry Pi only).
-            include "arm64-v8a"
-
-            // Specifies that we do not want to also generate a universal APK that includes all ABIs.
-            universalApk false
-        }
-    }
 }
 
 dependencies {
     // Our shared libraries
-    compile project(':libhardware')
-    compile project(':libsoftware')
-    compile project(':libcv')
+    compile project(":libsoftware")
+    compile project(":libcv")
 
-    // Android Support Libraries
+    // Support libraries
     compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support:support-v4:25.3.1'
+    compile 'com.android.support:design:25.3.1'
+
+    // Logging
+    compile 'com.jakewharton.timber:timber:4.5.1'
+
+    // Butter Knife
+    compile 'com.jakewharton:butterknife:8.5.1'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.5.1'
 
     // Testing
     testCompile 'junit:junit:4.12'

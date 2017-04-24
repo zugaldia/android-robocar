@@ -7,3 +7,6 @@ flash:
 	# (Windows) or The Unarchiver (Mac OS) instead.
 	diskutil unmountDisk $(DISK)
 	sudo dd bs=1m if=iot_rpi3.img of=$(DISK)
+
+connect:
+	adb connect Android.local

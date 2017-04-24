@@ -1,5 +1,6 @@
 package com.zugaldia.robocar.app;
 
+import android.bluetooth.BluetoothDevice;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.KeyEvent;
@@ -9,10 +10,19 @@ import com.zugaldia.robocar.hardware.adafruit2348.AdafruitMotorHat;
 import com.zugaldia.robocar.software.controller.nes30.NES30Connection;
 import com.zugaldia.robocar.software.controller.nes30.NES30Listener;
 import com.zugaldia.robocar.software.controller.nes30.NES30Manager;
+import com.zugaldia.robocar.software.webserver.LocalWebServer;
+import com.zugaldia.robocar.software.webserver.RequestListener;
+import com.zugaldia.robocar.software.webserver.models.RobocarMove;
+import com.zugaldia.robocar.software.webserver.models.RobocarResponse;
+import com.zugaldia.robocar.software.webserver.models.RobocarStatus;
 
+import java.io.IOException;
+
+import fi.iki.elonen.NanoHTTPD;
 import timber.log.Timber;
 
-public class MainActivity extends AppCompatActivity implements NES30Listener {
+public class MainActivity extends AppCompatActivity
+    implements NES30Listener, RequestListener {
 
   // Set the speed, from 0 (off) to 255 (max speed)
   private static final int MOTOR_SPEED = 255;
@@ -46,18 +56,33 @@ public class MainActivity extends AppCompatActivity implements NES30Listener {
     motorBackRight = motorHat.getMotor(4);
     motorBackRight.setSpeed(MOTOR_SPEED);
 
+    // Local web server
+    setupWebServer();
+
     // NES30 BT connection
     setupBluetooth();
   }
 
+  private void setupWebServer() {
+    LocalWebServer localWebServer = new LocalWebServer(this);
+    try {
+      localWebServer.start();
+    } catch (IOException e) {
+      Timber.e(e, "Failed to start local web server.");
+    }
+  }
+
   private void setupBluetooth() {
     nes30Connection = new NES30Connection(
-            this, RobocarConstants.NES30_NAME, RobocarConstants.NES30_MAC_ADDRESS);
+        this, RobocarConstants.NES30_NAME, RobocarConstants.NES30_MAC_ADDRESS);
 
     Timber.d("BT status: %b", nes30Connection.isEnabled());
     Timber.d("Paired devices: %d", nes30Connection.getPairedDevices().size());
-    if (!nes30Connection.isPaired()) {
-      Timber.d("Start discovery: %b", nes30Connection.startDiscovery());
+    BluetoothDevice nes30device = nes30Connection.isPaired();
+    if (nes30device == null) {
+      Timber.d("Starting discovery: %b", nes30Connection.startDiscovery());
+    } else {
+      Timber.d("Creating bond: %b", nes30Connection.createBond(nes30device));
     }
   }
 
@@ -168,4 +193,20 @@ public class MainActivity extends AppCompatActivity implements NES30Listener {
     motorBackLeft.run(AdafruitMotorHat.RELEASE);
     motorBackRight.run(AdafruitMotorHat.RELEASE);
   }
+
+  @Override
+  public void onRequest(NanoHTTPD.IHTTPSession session) {
+    LocalWebServer.logSession(session);
+  }
+
+  @Override
+  public RobocarStatus onStatus() {
+    return new RobocarStatus(200, "OK");
+  }
+
+  @Override
+  public RobocarResponse onMove(RobocarMove move) {
+    return new RobocarResponse(200, "TODO");
+  }
+
 }
