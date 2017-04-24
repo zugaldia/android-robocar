@@ -2,6 +2,11 @@ test:
     pre:
         - echo y | android update sdk --no-ui --all --filter "build-tools-25.0.2"
     override:
+        # Build the Raspberry PI app
         - cd robocar; ./gradlew test
         - cd robocar; ./gradlew assembleDebug
         - cp -r robocar/app/build/outputs/apk $CIRCLE_ARTIFACTS
+        # Build the companion app
+        - cd mobile; ./gradlew test
+        - cd mobile; ./gradlew assembleDebug
+        - cp -r mobile/app/build/outputs/apk $CIRCLE_ARTIFACTS

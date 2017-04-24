@@ -10,8 +10,9 @@ android {
         minSdkVersion 24
         targetSdkVersion 25
         versionCode 1
-        versionName "0.1"
+        versionName "0.1-SNAPSHOT"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        archivesBaseName = "robocar-mobile-${versionName}"
     }
 
     buildTypes {
