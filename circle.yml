@@ -1,6 +1,7 @@
 test:
     pre:
         - echo y | android update sdk --no-ui --all --filter "build-tools-25.0.2"
+        - echo y | android update sdk --no-ui --all --filter "constraint-layout-1.0.2"
     override:
         # Build the Raspberry PI app
         - cd robocar; ./gradlew test
