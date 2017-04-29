@@ -28,10 +28,6 @@ public class MainActivity extends AppCompatActivity
   private static final int MOTOR_SPEED = 255;
   private static final int MOTOR_SPEED_SLOW = 95;
 
-  private enum SpeedConfiguration{
-    FULL_SPEEDS, LOW_SPEED_ON_LEFT, LOW_SPEED_ON_RIGHT
-  }
-
   private NES30Manager nes30Manager;
   private NES30Connection nes30Connection;
   private boolean isMoving = false;
@@ -72,24 +68,18 @@ public class MainActivity extends AppCompatActivity
     setupBluetooth();
   }
 
-  private void setSpeedConfiguration() {
+  private void setMotorSpeedsBasedOnButtonsPressed() {
 
-    SpeedConfiguration speedConfiguration = SpeedConfiguration.FULL_SPEEDS;
+    boolean isLowSpeedOnLeft = isLeftPressed && isUpOrDownPressed;
+    boolean isLowSpeedOnRight = isRightPressed && isUpOrDownPressed;
 
-    if(isLeftPressed && isUpOrDownPressed)
-      speedConfiguration = SpeedConfiguration.LOW_SPEED_ON_LEFT;
-    else if(isRightPressed && isUpOrDownPressed)
-      speedConfiguration = SpeedConfiguration.LOW_SPEED_ON_RIGHT;
+    int speedLeft = isLowSpeedOnLeft ? MOTOR_SPEED_SLOW : MOTOR_SPEED;
+    int speedRight = isLowSpeedOnRight ? MOTOR_SPEED_SLOW : MOTOR_SPEED;
 
-    Timber.d("Setting speed configuration to: " + speedConfiguration.name());
-
-    motorFrontLeft.setSpeed( speedConfiguration == SpeedConfiguration.LOW_SPEED_ON_LEFT ? MOTOR_SPEED_SLOW: MOTOR_SPEED );
-
-    motorBackLeft.setSpeed( speedConfiguration == SpeedConfiguration.LOW_SPEED_ON_LEFT ? MOTOR_SPEED_SLOW: MOTOR_SPEED );
-
-    motorFrontRight.setSpeed( speedConfiguration == SpeedConfiguration.LOW_SPEED_ON_RIGHT ? MOTOR_SPEED_SLOW: MOTOR_SPEED );
-
-    motorBackRight.setSpeed( speedConfiguration == SpeedConfiguration.LOW_SPEED_ON_RIGHT ? MOTOR_SPEED_SLOW: MOTOR_SPEED );
+    motorFrontLeft.setSpeed(speedLeft);
+    motorBackLeft.setSpeed(speedLeft);
+    motorFrontRight.setSpeed(speedRight);
+    motorBackRight.setSpeed(speedRight);
   }
 
   private void setupWebServer() {
@@ -162,7 +152,7 @@ public class MainActivity extends AppCompatActivity
     // We start moving the moment the key is pressed
     isMoving = true;
 
-    setSpeedConfiguration();
+    setMotorSpeedsBasedOnButtonsPressed();
 
     switch (keyCode) {
       case NES30Manager.BUTTON_UP_CODE:
