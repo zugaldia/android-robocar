@@ -31,9 +31,9 @@ for line in lines:
     # 0 center, 1 left, 2 right, 3 steering, 4 throttle, 5 brake, 6 speed
     print('[%d/%d] Reading %s...' % (count, len(lines), DATA_FOLDER + line[0]))
     images.extend([
-        cv2.imread(DATA_FOLDER + line[0]),  # center
-        cv2.imread(DATA_FOLDER + line[1]),  # left
-        cv2.imread(DATA_FOLDER + line[2])])  # right
+        cv2.imread(DATA_FOLDER + line[0].strip()),  # center
+        cv2.imread(DATA_FOLDER + line[1].strip()),  # left
+        cv2.imread(DATA_FOLDER + line[2].strip())])  # right
     measurements.extend([
         float(line[3]),  # center
         float(line[3]) + correction,  # left
