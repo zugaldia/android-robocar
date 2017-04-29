@@ -65,7 +65,7 @@ public class AdafruitDCMotor {
     }
 
     // Set the speed only if it has changed, otherwise the motor will be jittery.
-    if(lastSpeed == -1 || lastSpeed != speed) {
+    if (lastSpeed == -1 || lastSpeed != speed) {
       MC.getPwm().setPWM(PWMpin, 0, speed * 16);
     }
 
