@@ -74,8 +74,6 @@ public class MainActivity extends AppCompatActivity
 
   private void setSpeedConfiguration() {
 
-    boolean isUpOrDownPressed = isUpPressed || isDownPressed;
-
     SpeedConfiguration speedConfiguration = SpeedConfiguration.FULL_SPEEDS;
 
     if(isLeftPressed && isUpOrDownPressed)
