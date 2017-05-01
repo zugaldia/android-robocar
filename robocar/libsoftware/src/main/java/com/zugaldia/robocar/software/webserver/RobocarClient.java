@@ -16,11 +16,14 @@ public class RobocarClient {
 
   private RobocarService service;
 
+  /**
+   * Public constructor.
+   */
   public RobocarClient() {
     Retrofit retrofit = new Retrofit.Builder()
-      .baseUrl("http://localhost:8080")
-      .addConverterFactory(GsonConverterFactory.create())
-      .build();
+        .baseUrl("http://localhost:8080")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build();
 
     service = retrofit.create(RobocarService.class);
   }

@@ -5,38 +5,39 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.KeyEvent;
 
-import com.zugaldia.robocar.hardware.adafruit2348.AdafruitDCMotor;
+import com.zugaldia.robocar.hardware.adafruit2348.AdafruitDcMotor;
 import com.zugaldia.robocar.hardware.adafruit2348.AdafruitMotorHat;
-import com.zugaldia.robocar.software.controller.nes30.NES30Connection;
-import com.zugaldia.robocar.software.controller.nes30.NES30Listener;
-import com.zugaldia.robocar.software.controller.nes30.NES30Manager;
+import com.zugaldia.robocar.software.controller.nes30.Nes30Connection;
+import com.zugaldia.robocar.software.controller.nes30.Nes30Listener;
+import com.zugaldia.robocar.software.controller.nes30.Nes30Manager;
 import com.zugaldia.robocar.software.webserver.LocalWebServer;
 import com.zugaldia.robocar.software.webserver.RequestListener;
 import com.zugaldia.robocar.software.webserver.models.RobocarMove;
 import com.zugaldia.robocar.software.webserver.models.RobocarResponse;
 import com.zugaldia.robocar.software.webserver.models.RobocarStatus;
 
+import fi.iki.elonen.NanoHTTPD;
+
 import java.io.IOException;
 
-import fi.iki.elonen.NanoHTTPD;
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity
-    implements NES30Listener, RequestListener {
+    implements Nes30Listener, RequestListener {
 
   // Set the speed, from 0 (off) to 255 (max speed)
   private static final int MOTOR_SPEED = 255;
   private static final int MOTOR_SPEED_SLOW = 95;
 
-  private NES30Manager nes30Manager;
-  private NES30Connection nes30Connection;
+  private Nes30Manager nes30Manager;
+  private Nes30Connection nes30Connection;
   private boolean isMoving = false;
 
   private AdafruitMotorHat motorHat;
-  private AdafruitDCMotor motorFrontLeft;
-  private AdafruitDCMotor motorFrontRight;
-  private AdafruitDCMotor motorBackLeft;
-  private AdafruitDCMotor motorBackRight;
+  private AdafruitDcMotor motorFrontLeft;
+  private AdafruitDcMotor motorFrontRight;
+  private AdafruitDcMotor motorBackLeft;
+  private AdafruitDcMotor motorBackRight;
 
   //TODO: refactoring: make these into a class, maybe call it ButtonPressStates
   private boolean isUpPressed = false;
@@ -52,7 +53,7 @@ public class MainActivity extends AppCompatActivity
     setContentView(R.layout.activity_main);
 
     // Controller
-    nes30Manager = new NES30Manager(this);
+    nes30Manager = new Nes30Manager(this);
 
     // Motors
     motorHat = new AdafruitMotorHat();
@@ -92,7 +93,7 @@ public class MainActivity extends AppCompatActivity
   }
 
   private void setupBluetooth() {
-    nes30Connection = new NES30Connection(
+    nes30Connection = new Nes30Connection(
         this, RobocarConstants.NES30_NAME, RobocarConstants.NES30_MAC_ADDRESS);
 
     Timber.d("BT status: %b", nes30Connection.isEnabled());
@@ -138,13 +139,12 @@ public class MainActivity extends AppCompatActivity
   }
 
   @Override
-  public void onKeyPress(@NES30Manager.ButtonCode int keyCode, boolean isDown) {
+  public void onKeyPress(@Nes30Manager.ButtonCode int keyCode, boolean isDown) {
 
     updateButtonPressedStates(keyCode, isDown);
 
 
-
-    if(allButtonsReleased && isMoving){
+    if (allButtonsReleased && isMoving) {
       isMoving = false;
       release();
       return;
@@ -155,45 +155,53 @@ public class MainActivity extends AppCompatActivity
     setMotorSpeedsBasedOnButtonsPressed();
 
     switch (keyCode) {
-      case NES30Manager.BUTTON_UP_CODE:
+      case Nes30Manager.BUTTON_UP_CODE:
         moveForward();
         break;
-      case NES30Manager.BUTTON_DOWN_CODE:
+      case Nes30Manager.BUTTON_DOWN_CODE:
         moveBackward();
         break;
-      case NES30Manager.BUTTON_LEFT_CODE:
-        if( !isUpOrDownPressed )
+      case Nes30Manager.BUTTON_LEFT_CODE:
+        if (!isUpOrDownPressed) {
           turnLeft();
+        }
         break;
-      case NES30Manager.BUTTON_RIGHT_CODE:
-        if(!isUpOrDownPressed)
+      case Nes30Manager.BUTTON_RIGHT_CODE:
+        if (!isUpOrDownPressed) {
           turnRight();
+        }
         break;
-      case NES30Manager.BUTTON_KONAMI:
+      case Nes30Manager.BUTTON_KONAMI:
         // Do your magic here ;-)
+        break;
+      default:
+        // No action
         break;
     }
   }
 
-  private void updateButtonPressedStates(@NES30Manager.ButtonCode int keyCode, boolean isDown) {
+  private void updateButtonPressedStates(@Nes30Manager.ButtonCode int keyCode, boolean isDown) {
     switch (keyCode) {
-      case NES30Manager.BUTTON_UP_CODE:
-       isUpPressed = isDown;
+      case Nes30Manager.BUTTON_UP_CODE:
+        isUpPressed = isDown;
         break;
-      case NES30Manager.BUTTON_DOWN_CODE:
+      case Nes30Manager.BUTTON_DOWN_CODE:
         isDownPressed = isDown;
         break;
-      case NES30Manager.BUTTON_LEFT_CODE:
+      case Nes30Manager.BUTTON_LEFT_CODE:
         isLeftPressed = isDown;
         break;
-      case NES30Manager.BUTTON_RIGHT_CODE:
+      case Nes30Manager.BUTTON_RIGHT_CODE:
         isRightPressed = isDown;
+        break;
+      default:
+        // No action
         break;
     }
 
     isUpOrDownPressed = isUpPressed || isDownPressed;
 
-    allButtonsReleased = !(isUpPressed || isDownPressed|| isLeftPressed|| isRightPressed);
+    allButtonsReleased = !(isUpPressed || isDownPressed || isLeftPressed || isRightPressed);
   }
 
   private void moveForward() {
