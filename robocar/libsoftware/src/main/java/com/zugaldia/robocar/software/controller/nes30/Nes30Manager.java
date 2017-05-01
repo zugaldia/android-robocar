@@ -12,15 +12,15 @@ import java.util.Deque;
 import timber.log.Timber;
 
 /**
- * Manage NES30 controller key events
+ * Manage NES30 controller key events.
  */
 
-public class NES30Manager implements KeyEvent.Callback {
+public class Nes30Manager implements KeyEvent.Callback {
 
   @Retention(RetentionPolicy.SOURCE)
-  @IntDef( {BUTTON_LEFT_CODE, BUTTON_RIGHT_CODE, BUTTON_UP_CODE, BUTTON_DOWN_CODE,
-    BUTTON_SELECT_CODE, BUTTON_START_CODE, BUTTON_A_CODE, BUTTON_B_CODE,
-    BUTTON_X_CODE, BUTTON_Y_CODE, BUTTON_L_CODE, BUTTON_R_CODE, BUTTON_KONAMI})
+  @IntDef({BUTTON_LEFT_CODE, BUTTON_RIGHT_CODE, BUTTON_UP_CODE, BUTTON_DOWN_CODE,
+      BUTTON_SELECT_CODE, BUTTON_START_CODE, BUTTON_A_CODE, BUTTON_B_CODE,
+      BUTTON_X_CODE, BUTTON_Y_CODE, BUTTON_L_CODE, BUTTON_R_CODE, BUTTON_KONAMI})
   public @interface ButtonCode {
   }
 
@@ -43,27 +43,27 @@ public class NES30Manager implements KeyEvent.Callback {
   public static final int BUTTON_KONAMI = -1;
 
   private Deque<Integer> history = null;
-  private NES30Listener listener = null;
+  private Nes30Listener listener = null;
 
   private Deque<Integer> konami = new ArrayDeque<>(Arrays.asList(
-    BUTTON_UP_CODE, BUTTON_UP_CODE, BUTTON_DOWN_CODE, BUTTON_DOWN_CODE,
-    BUTTON_LEFT_CODE, BUTTON_RIGHT_CODE, BUTTON_LEFT_CODE, BUTTON_RIGHT_CODE,
-    BUTTON_B_CODE, BUTTON_A_CODE));
+      BUTTON_UP_CODE, BUTTON_UP_CODE, BUTTON_DOWN_CODE, BUTTON_DOWN_CODE,
+      BUTTON_LEFT_CODE, BUTTON_RIGHT_CODE, BUTTON_LEFT_CODE, BUTTON_RIGHT_CODE,
+      BUTTON_B_CODE, BUTTON_A_CODE));
 
-  public NES30Manager() {
+  public Nes30Manager() {
     history = new ArrayDeque<>();
   }
 
-  public NES30Manager(NES30Listener listener) {
+  public Nes30Manager(Nes30Listener listener) {
     this();
     this.listener = listener;
   }
 
-  public NES30Listener getListener() {
+  public Nes30Listener getListener() {
     return listener;
   }
 
-  public void setListener(NES30Listener listener) {
+  public void setListener(Nes30Listener listener) {
     this.listener = listener;
   }
 
@@ -110,7 +110,7 @@ public class NES30Manager implements KeyEvent.Callback {
 
     if (Arrays.equals(history.toArray(), konami.toArray())) {
       if (listener != null) {
-        listener.onKeyPress(NES30Manager.BUTTON_KONAMI, true);
+        listener.onKeyPress(Nes30Manager.BUTTON_KONAMI, true);
       }
     }
   }

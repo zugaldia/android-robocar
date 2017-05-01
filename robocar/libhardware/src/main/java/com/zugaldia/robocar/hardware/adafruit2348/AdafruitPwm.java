@@ -11,8 +11,8 @@ import timber.log.Timber;
  * A port of `Adafruit_PWM_Servo_Driver` (Adafruit PCA9685 16-Channel PWM Servo
  * Driver) to Android Things. Instead of using `Adafruit_I2C` we're using the
  * `I2cDevice` class shipped with Android Things.
- * <p>
- * https://github.com/adafruit/Adafruit-Motor-HAT-Python-Library/blob/master/Adafruit_MotorHAT/Adafruit_PWM_Servo_Driver.py
+ *
+ * <p>https://github.com/adafruit/Adafruit-Motor-HAT-Python-Library/blob/master/Adafruit_MotorHAT/Adafruit_PWM_Servo_Driver.py
  * https://developer.android.com/things/sdk/pio/i2c.html
  */
 
@@ -47,10 +47,16 @@ public class AdafruitPwm {
   private I2cDevice i2c;
   private boolean debug;
 
+  /**
+   * Public constructor.
+   */
   public AdafruitPwm() {
     this(I2C_DEVICE_NAME, I2C_ADDRESS, false);
   }
 
+  /**
+   * Public constructor.
+   */
   public AdafruitPwm(String deviceName, int address, boolean debug) {
     try {
       // Attempt to access the I2C device
@@ -70,7 +76,7 @@ public class AdafruitPwm {
       Timber.d("Resetting PCA9685 MODE1 (without SLEEP) and MODE2.");
     }
 
-    setAllPWM(0, 0);
+    setAllPwm(0, 0);
     writeRegByteWrapped(__MODE2, (byte) __OUTDRV);
     writeRegByteWrapped(__MODE1, (byte) __ALLCALL);
     sleepWrapped(0.005); // wait for oscillator
@@ -81,6 +87,9 @@ public class AdafruitPwm {
     sleepWrapped(0.005); // wait for oscillator
   }
 
+  /**
+   * Close the device.
+   */
   public void close() {
     if (i2c != null) {
       try {
@@ -93,9 +102,9 @@ public class AdafruitPwm {
   }
 
   /**
-   * Sets the PWM frequency
+   * Sets the PWM frequency.
    */
-  public void setPWMFreq(int freq) {
+  public void setPwmFreq(int freq) {
     float prescaleval = 25000000.0f; // 25MHz
     prescaleval /= 4096.0; // 12-bit
     prescaleval /= (float) freq;
@@ -120,9 +129,9 @@ public class AdafruitPwm {
   }
 
   /**
-   * Sets a single PWM channel
+   * Sets a single PWM channel.
    */
-  public void setPWM(int channel, int on, int off) {
+  public void setPwm(int channel, int on, int off) {
     writeRegByteWrapped(__LED0_ON_L + 4 * channel, (byte) (on & 0xFF));
     writeRegByteWrapped(__LED0_ON_H + 4 * channel, (byte) (on >> 8));
     writeRegByteWrapped(__LED0_OFF_L + 4 * channel, (byte) (off & 0xFF));
@@ -130,9 +139,9 @@ public class AdafruitPwm {
   }
 
   /**
-   * Sets a all PWM channels
+   * Sets a all PWM channels.
    */
-  private void setAllPWM(int on, int off) {
+  private void setAllPwm(int on, int off) {
     writeRegByteWrapped(__ALL_LED_ON_L, (byte) (on & 0xFF));
     writeRegByteWrapped(__ALL_LED_ON_H, (byte) (on >> 8));
     writeRegByteWrapped(__ALL_LED_OFF_L, (byte) (off & 0xFF));

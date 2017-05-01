@@ -13,7 +13,9 @@ import fi.iki.elonen.NanoHTTPD;
 public interface RequestListener {
 
   void onRequest(NanoHTTPD.IHTTPSession session);
+
   RobocarStatus onStatus();
+
   RobocarResponse onMove(RobocarMove move);
 
 }

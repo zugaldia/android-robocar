@@ -10,3 +10,15 @@ flash:
 
 connect:
 	adb connect Android.local
+
+test:
+	cd robocar; ./gradlew test
+	cd mobile; ./gradlew :app:test
+
+checkstyle:
+	cd robocar; ./gradlew checkstyle
+	cd mobile; ./gradlew checkstyle
+
+build:
+	cd robocar; ./gradlew assembleDebug
+	cd mobile; ./gradlew assembleDebug

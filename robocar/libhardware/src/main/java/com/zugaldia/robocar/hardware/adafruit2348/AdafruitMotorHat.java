@@ -2,8 +2,8 @@ package com.zugaldia.robocar.hardware.adafruit2348;
 
 /**
  * A port of `Adafruit_MotorHAT` to Android Things.
- * <p>
- * https://github.com/adafruit/Adafruit-Motor-HAT-Python-Library/blob/master/Adafruit_MotorHAT/Adafruit_MotorHAT.py
+ *
+ * <p>https://github.com/adafruit/Adafruit-Motor-HAT-Python-Library/blob/master/Adafruit_MotorHAT/Adafruit_MotorHAT.py
  */
 
 public class AdafruitMotorHat {
@@ -21,23 +21,32 @@ public class AdafruitMotorHat {
   public static final int MICROSTEP = 4;
 
   private AdafruitPwm pwm;
-  private AdafruitDCMotor[] motors;
+  private AdafruitDcMotor[] motors;
 
+  /**
+   * Public constructor.
+   */
   public AdafruitMotorHat() {
     pwm = new AdafruitPwm();
-    pwm.setPWMFreq(MOTOR_FREQUENCY);
-    motors = new AdafruitDCMotor[] {
-      new AdafruitDCMotor(this, 0),
-      new AdafruitDCMotor(this, 1),
-      new AdafruitDCMotor(this, 2),
-      new AdafruitDCMotor(this, 3)
+    pwm.setPwmFreq(MOTOR_FREQUENCY);
+    motors = new AdafruitDcMotor[] {
+        new AdafruitDcMotor(this, 0),
+        new AdafruitDcMotor(this, 1),
+        new AdafruitDcMotor(this, 2),
+        new AdafruitDcMotor(this, 3)
     };
   }
 
+  /**
+   * Get current PWM value.
+   */
   public AdafruitPwm getPwm() {
     return pwm;
   }
 
+  /**
+   * Set pin to specified value.
+   */
   public void setPin(int pin, int value) {
     if ((pin < 0) || (pin > 15)) {
       throw new RuntimeException("PWM pin must be between 0 and 15 inclusive");
@@ -46,14 +55,17 @@ public class AdafruitMotorHat {
       throw new RuntimeException("Pin value must be 0 or 1!");
     }
     if ((value == 0)) {
-      pwm.setPWM(pin, 0, 4096);
+      pwm.setPwm(pin, 0, 4096);
     }
     if ((value == 1)) {
-      pwm.setPWM(pin, 4096, 0);
+      pwm.setPwm(pin, 4096, 0);
     }
   }
 
-  public AdafruitDCMotor getMotor(int num) {
+  /**
+   * Get the specific motor.
+   */
+  public AdafruitDcMotor getMotor(int num) {
     if ((num < 1) || (num > 4)) {
       throw new RuntimeException("MotorHAT Motor must be between 1 and 4 inclusive");
     }

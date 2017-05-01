@@ -2,60 +2,68 @@ package com.zugaldia.robocar.hardware.adafruit2348;
 
 /**
  * A port of `Adafruit_DCMotor` to Android Things.
- * <p>
- * https://github.com/adafruit/Adafruit-Motor-HAT-Python-Library/blob/master/Adafruit_MotorHAT/Adafruit_MotorHAT.py
+ *
+ * <p>See: https://github.com/adafruit/Adafruit-Motor-HAT-Python-Library/blob/master/Adafruit_MotorHAT/Adafruit_MotorHAT.py
  */
+public class AdafruitDcMotor {
 
-public class AdafruitDCMotor {
-
-  private AdafruitMotorHat MC;
+  private AdafruitMotorHat mc;
   private int motornum;
-  int PWMpin;
-  int IN1pin;
-  int IN2pin;
+  int pwmPin;
+  int in1Pin;
+  int in2Pin;
   int lastSpeed = -1;
 
-  public AdafruitDCMotor(AdafruitMotorHat MC, int num) {
-    this.MC = MC;
+  /**
+   * Public constructor.
+   */
+  public AdafruitDcMotor(AdafruitMotorHat mc, int num) {
+    this.mc = mc;
     this.motornum = num;
     if (num == 0) {
-      PWMpin = 8;
-      IN2pin = 9;
-      IN1pin = 10;
+      pwmPin = 8;
+      in2Pin = 9;
+      in1Pin = 10;
     } else if (num == 1) {
-      PWMpin = 13;
-      IN2pin = 12;
-      IN1pin = 11;
+      pwmPin = 13;
+      in2Pin = 12;
+      in1Pin = 11;
     } else if (num == 2) {
-      PWMpin = 2;
-      IN2pin = 3;
-      IN1pin = 4;
+      pwmPin = 2;
+      in2Pin = 3;
+      in1Pin = 4;
     } else if (num == 3) {
-      PWMpin = 7;
-      IN2pin = 6;
-      IN1pin = 5;
+      pwmPin = 7;
+      in2Pin = 6;
+      in1Pin = 5;
     } else {
       throw new RuntimeException("Motor number must be between 1 and 4, inclusive.");
     }
   }
 
+  /**
+   * Run the specific command.
+   */
   public void run(int command) {
-    if (MC == null) {
+    if (mc == null) {
       return;
     }
 
     if (command == AdafruitMotorHat.FORWARD) {
-      MC.setPin(IN2pin, 0);
-      MC.setPin(IN1pin, 1);
+      mc.setPin(in2Pin, 0);
+      mc.setPin(in1Pin, 1);
     } else if (command == AdafruitMotorHat.BACKWARD) {
-      MC.setPin(IN1pin, 0);
-      MC.setPin(IN2pin, 1);
+      mc.setPin(in1Pin, 0);
+      mc.setPin(in2Pin, 1);
     } else if (command == AdafruitMotorHat.RELEASE) {
-      MC.setPin(IN1pin, 0);
-      MC.setPin(IN2pin, 0);
+      mc.setPin(in1Pin, 0);
+      mc.setPin(in2Pin, 0);
     }
   }
 
+  /**
+   * Run the specific speed.
+   */
   public void setSpeed(int speed) {
     if (speed < 0) {
       speed = 0;
@@ -66,7 +74,7 @@ public class AdafruitDCMotor {
 
     // Set the speed only if it has changed, otherwise the motor will be jittery.
     if (lastSpeed == -1 || lastSpeed != speed) {
-      MC.getPwm().setPWM(PWMpin, 0, speed * 16);
+      mc.getPwm().setPwm(pwmPin, 0, speed * 16);
     }
 
     lastSpeed = speed;
