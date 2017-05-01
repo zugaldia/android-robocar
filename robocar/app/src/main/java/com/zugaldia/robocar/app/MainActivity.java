@@ -26,6 +26,7 @@ public class MainActivity extends AppCompatActivity
 
   // Set the speed, from 0 (off) to 255 (max speed)
   private static final int MOTOR_SPEED = 255;
+  private static final int MOTOR_SPEED_SLOW = 95;
 
   private NES30Manager nes30Manager;
   private NES30Connection nes30Connection;
@@ -36,6 +37,14 @@ public class MainActivity extends AppCompatActivity
   private AdafruitDCMotor motorFrontRight;
   private AdafruitDCMotor motorBackLeft;
   private AdafruitDCMotor motorBackRight;
+
+  //TODO: refactoring: make these into a class, maybe call it ButtonPressStates
+  private boolean isUpPressed = false;
+  private boolean isDownPressed = false;
+  private boolean isLeftPressed = false;
+  private boolean isRightPressed = false;
+  private boolean isUpOrDownPressed = false;
+  private boolean allButtonsReleased = true;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -48,19 +57,29 @@ public class MainActivity extends AppCompatActivity
     // Motors
     motorHat = new AdafruitMotorHat();
     motorFrontLeft = motorHat.getMotor(1);
-    motorFrontLeft.setSpeed(MOTOR_SPEED);
     motorBackLeft = motorHat.getMotor(2);
-    motorBackLeft.setSpeed(MOTOR_SPEED);
     motorFrontRight = motorHat.getMotor(3);
-    motorFrontRight.setSpeed(MOTOR_SPEED);
     motorBackRight = motorHat.getMotor(4);
-    motorBackRight.setSpeed(MOTOR_SPEED);
 
     // Local web server
     setupWebServer();
 
     // NES30 BT connection
     setupBluetooth();
+  }
+
+  private void setMotorSpeedsBasedOnButtonsPressed() {
+
+    boolean isLowSpeedOnLeft = isLeftPressed && isUpOrDownPressed;
+    boolean isLowSpeedOnRight = isRightPressed && isUpOrDownPressed;
+
+    int speedLeft = isLowSpeedOnLeft ? MOTOR_SPEED_SLOW : MOTOR_SPEED;
+    int speedRight = isLowSpeedOnRight ? MOTOR_SPEED_SLOW : MOTOR_SPEED;
+
+    motorFrontLeft.setSpeed(speedLeft);
+    motorBackLeft.setSpeed(speedLeft);
+    motorFrontRight.setSpeed(speedRight);
+    motorBackRight.setSpeed(speedRight);
   }
 
   private void setupWebServer() {
@@ -120,20 +139,20 @@ public class MainActivity extends AppCompatActivity
 
   @Override
   public void onKeyPress(@NES30Manager.ButtonCode int keyCode, boolean isDown) {
-    if (isDown && isMoving) {
-      // We're already moving, no need send further instructions to the engine.
-      // One way to improve this is to tie this event with instructions to the engine
-      // to increase its speed (acceleration).
+
+    updateButtonPressedStates(keyCode, isDown);
+
+
+
+    if(allButtonsReleased && isMoving){
+      isMoving = false;
+      release();
       return;
-    } else {
-      // We start moving the moment the key is pressed
-      isMoving = isDown;
-      if (!isMoving) {
-        // And we stop when the key is released
-        release();
-        return;
-      }
     }
+    // We start moving the moment the key is pressed
+    isMoving = true;
+
+    setMotorSpeedsBasedOnButtonsPressed();
 
     switch (keyCode) {
       case NES30Manager.BUTTON_UP_CODE:
@@ -143,15 +162,38 @@ public class MainActivity extends AppCompatActivity
         moveBackward();
         break;
       case NES30Manager.BUTTON_LEFT_CODE:
-        turnLeft();
+        if( !isUpOrDownPressed )
+          turnLeft();
         break;
       case NES30Manager.BUTTON_RIGHT_CODE:
-        turnRight();
+        if(!isUpOrDownPressed)
+          turnRight();
         break;
       case NES30Manager.BUTTON_KONAMI:
         // Do your magic here ;-)
         break;
     }
+  }
+
+  private void updateButtonPressedStates(@NES30Manager.ButtonCode int keyCode, boolean isDown) {
+    switch (keyCode) {
+      case NES30Manager.BUTTON_UP_CODE:
+       isUpPressed = isDown;
+        break;
+      case NES30Manager.BUTTON_DOWN_CODE:
+        isDownPressed = isDown;
+        break;
+      case NES30Manager.BUTTON_LEFT_CODE:
+        isLeftPressed = isDown;
+        break;
+      case NES30Manager.BUTTON_RIGHT_CODE:
+        isRightPressed = isDown;
+        break;
+    }
+
+    isUpOrDownPressed = isUpPressed || isDownPressed;
+
+    allButtonsReleased = !(isUpPressed || isDownPressed|| isLeftPressed|| isRightPressed);
   }
 
   private void moveForward() {

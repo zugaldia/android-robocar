@@ -13,6 +13,7 @@ public class AdafruitDCMotor {
   int PWMpin;
   int IN1pin;
   int IN2pin;
+  int lastSpeed = -1;
 
   public AdafruitDCMotor(AdafruitMotorHat MC, int num) {
     this.MC = MC;
@@ -63,6 +64,11 @@ public class AdafruitDCMotor {
       speed = 255;
     }
 
-    MC.getPwm().setPWM(PWMpin, 0, speed * 16);
+    // Set the speed only if it has changed, otherwise the motor will be jittery.
+    if (lastSpeed == -1 || lastSpeed != speed) {
+      MC.getPwm().setPWM(PWMpin, 0, speed * 16);
+    }
+
+    lastSpeed = speed;
   }
 }
