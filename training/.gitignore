@@ -5,4 +5,5 @@ __MACOSX
 data/
 data.zip
 model.h5
+model.json
 model.png

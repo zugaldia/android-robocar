@@ -20,24 +20,28 @@ from sklearn.utils import shuffle
 #
 
 INPUT_DATA_FOLDER = 'data/'
-INPUT_CSV_FILE = INPUT_DATA_FOLDER + 'driving_log.csv'
+INPUT_DATA_FILE = INPUT_DATA_FOLDER + 'driving_log.csv'
 
-OUTPUT_MODEL = 'model.h5'
+OUTPUT_MODEL_HDF5 = 'model.h5'  # HDF5 file
+OUTPUT_MODEL_JSON = 'model.json'
 OUTPUT_MODEL_CHART = 'model.png'
 
-CORRECTION = 0.2
-EPOCHS = 5
+EPOCHS = 10
 
 #
 # Read CSV file
 #
 
+CORRECTION = 0.2  # Steering correction to augment data
+
 lines = []
-print('Reading %s...' % INPUT_CSV_FILE)
-with open(INPUT_CSV_FILE) as csv_file:
+print('Reading %s...' % INPUT_DATA_FILE)
+with open(INPUT_DATA_FILE) as csv_file:
     reader = csv.reader(csv_file)
     for line in reader:
+        # Ignore header
         if line[0].startswith('IMG/'):
+            # Format is center,left,right,steering,throttle,brake,speed
             steering = float(line[3])
 
             # Augment the data right away so that it gets randomized
@@ -53,6 +57,7 @@ with open(INPUT_CSV_FILE) as csv_file:
 train_samples, validation_samples = train_test_split(lines, test_size=0.2)
 print('Samples found: %d (training: %d, validation: %d).'
       % (len(lines), len(train_samples), len(validation_samples)))
+
 
 #
 # Generators
@@ -76,10 +81,10 @@ def read_measurement(measurement, flip):
 
 
 def generator(samples, batch_size=32):
-    num_samples = len(samples)
+    total_samples = len(samples)
     while 1:  # Loop forever so the generator never terminates
         samples = shuffle(samples)
-        for offset in range(0, num_samples, batch_size):
+        for offset in range(0, total_samples, batch_size):
             images = []
             measurements = []
             batch_samples = samples[offset:offset + batch_size]
@@ -110,7 +115,7 @@ model.add(Lambda(lambda x: x / 255.0 - 0.5, input_shape=(160, 320, 3)))
 # - 20 rows pixels from the bottom of the image
 # - 0 columns of pixels from the left of the image
 # - 0 columns of pixels from the right of the image
-model.add(Cropping2D(cropping=((50, 20), (0, 0)), input_shape=(160, 320, 3)))
+model.add(Cropping2D(cropping=((50, 20), (0, 0))))
 
 # NVIDIA architecture
 model.add(Convolution2D(24, 5, 5, subsample=(2, 2), activation='relu'))
@@ -126,14 +131,16 @@ model.add(Dense(1))
 
 # Perform training
 model.compile(loss='mse', optimizer='adam')
-history_object = model.fit_generator(train_generator,
+history_object = model.fit_generator(generator=train_generator,
                                      samples_per_epoch=len(train_samples),
                                      validation_data=validation_generator,
                                      nb_val_samples=len(validation_samples),
                                      nb_epoch=EPOCHS, verbose=1)
 
-# Save result
-model.save(OUTPUT_MODEL)
+# Save model
+model.save(OUTPUT_MODEL_HDF5)
+with open(OUTPUT_MODEL_JSON, 'w') as output_json:
+    output_json.write(model.to_json())
 
 #
 # Visualize loss
