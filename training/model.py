@@ -1,13 +1,14 @@
 """
 
-TODO:
-- Export model in TF format
-- Reduce images size
+This script implements a CNN to train a car to drive autonomously.
 
 """
 
-import csv
+# See http://matplotlib.org/2.0.0rc1/_sources/faq/howto_faq.txt
+import matplotlib
+matplotlib.use('Agg')
 
+import csv
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,13 +20,15 @@ from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 
 #
-# You shouldn't need to modify anything below this section.
+# Settings
 #
 
 # Sample training data:
 # https://d17h27t6h515a5.cloudfront.net/topher/2016/December/584f6edd_data/data.zip
 INPUT_DATA_FOLDER = 'data/'
 INPUT_DATA_FILE = INPUT_DATA_FOLDER + 'driving_log.csv'
+INPUT_WIDTH = 320
+INPUT_HEIGHT = 160
 
 # Resulting models
 OUTPUT_MODEL_HDF5 = 'model.h5'  # HDF5 file
@@ -33,13 +36,14 @@ OUTPUT_MODEL_JSON = 'model.json'
 OUTPUT_MODEL_TENSORFLOW = 'model.pb'  # Protobuf
 OUTPUT_MODEL_CHART = 'model.png'
 
+# Params to tweak
 EPOCHS = 10
-
-#
-# Read CSV file
-#
-
 CORRECTION = 0.2  # Steering correction to augment data
+TEST_SIZE = 0.2
+
+#
+# You shouldn't need to modify anything below this point
+#
 
 lines = []
 print('Reading %s...' % INPUT_DATA_FILE)
@@ -61,7 +65,7 @@ with open(INPUT_DATA_FILE) as csv_file:
             lines.append({'path': line[1], 'steering': steering + CORRECTION, 'flip': True})  # left
             lines.append({'path': line[2], 'steering': steering - CORRECTION, 'flip': True})  # right
 
-train_samples, validation_samples = train_test_split(lines, test_size=0.2)
+train_samples, validation_samples = train_test_split(lines, test_size=TEST_SIZE)
 print('Samples found: %d (training: %d, validation: %d).'
       % (len(lines), len(train_samples), len(validation_samples)))
 
@@ -114,8 +118,9 @@ validation_generator = generator(validation_samples, batch_size=32)
 print('Starting training...')
 model = Sequential()
 
-# Normalization
-model.add(Lambda(lambda x: x / 255.0 - 0.5, input_shape=(160, 320, 3)))
+# Normalization - a potential optimization here is to reduce by half the
+# size of the input images to 80x160 to make training faster
+model.add(Lambda(lambda x: x / 255.0 - 0.5, input_shape=(INPUT_HEIGHT, INPUT_WIDTH, 3)))
 
 # This crops:
 # - 50 rows pixels from the top of the image
@@ -125,6 +130,8 @@ model.add(Lambda(lambda x: x / 255.0 - 0.5, input_shape=(160, 320, 3)))
 model.add(Cropping2D(cropping=((50, 20), (0, 0))))
 
 # NVIDIA architecture
+# https://arxiv.org/pdf/1604.07316v1.pdf
+# https://devblogs.nvidia.com/parallelforall/deep-learning-self-driving-cars/
 model.add(Convolution2D(24, 5, 5, subsample=(2, 2), activation='relu'))
 model.add(Convolution2D(36, 5, 5, subsample=(2, 2), activation='relu'))
 model.add(Convolution2D(48, 5, 5, subsample=(2, 2), activation='relu'))
