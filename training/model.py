@@ -7,9 +7,12 @@ TODO:
 """
 
 import csv
+
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+import tensorflow as tf
+from keras import backend as K
 from keras.layers import Flatten, Dense, Lambda, Cropping2D, Convolution2D
 from keras.models import Sequential
 from sklearn.model_selection import train_test_split
@@ -19,11 +22,15 @@ from sklearn.utils import shuffle
 # You shouldn't need to modify anything below this section.
 #
 
+# Sample training data:
+# https://d17h27t6h515a5.cloudfront.net/topher/2016/December/584f6edd_data/data.zip
 INPUT_DATA_FOLDER = 'data/'
 INPUT_DATA_FILE = INPUT_DATA_FOLDER + 'driving_log.csv'
 
+# Resulting models
 OUTPUT_MODEL_HDF5 = 'model.h5'  # HDF5 file
 OUTPUT_MODEL_JSON = 'model.json'
+OUTPUT_MODEL_TENSORFLOW = 'model.pb'  # Protobuf
 OUTPUT_MODEL_CHART = 'model.png'
 
 EPOCHS = 10
@@ -141,6 +148,10 @@ history_object = model.fit_generator(generator=train_generator,
 model.save(OUTPUT_MODEL_HDF5)
 with open(OUTPUT_MODEL_JSON, 'w') as output_json:
     output_json.write(model.to_json())
+
+# Save TensorFlow model
+tf.train.write_graph(K.get_session().graph.as_graph_def(),
+                     logdir='.', name=OUTPUT_MODEL_TENSORFLOW, as_text=False)
 
 #
 # Visualize loss
