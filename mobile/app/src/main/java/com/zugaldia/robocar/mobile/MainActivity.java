@@ -24,6 +24,7 @@ import com.zugaldia.robocar.software.webserver.RequestListener;
 import com.zugaldia.robocar.software.webserver.RobocarClient;
 import com.zugaldia.robocar.software.webserver.models.RobocarMove;
 import com.zugaldia.robocar.software.webserver.models.RobocarResponse;
+import com.zugaldia.robocar.software.webserver.models.RobocarSpeed;
 import com.zugaldia.robocar.software.webserver.models.RobocarStatus;
 
 import fi.iki.elonen.NanoHTTPD;
@@ -244,5 +245,11 @@ public class MainActivity extends AppCompatActivity
   @Override
   public RobocarResponse onMove(RobocarMove move) {
     return new RobocarResponse(200, String.format("Moved: %d", move.getKeyCode()));
+  }
+
+  @Override
+  public RobocarResponse onSpeed(RobocarSpeed speed) {
+    return new RobocarResponse(200, String.format(
+        "Speed change: %d/%d", speed.getLeft(), speed.getRight()));
   }
 }

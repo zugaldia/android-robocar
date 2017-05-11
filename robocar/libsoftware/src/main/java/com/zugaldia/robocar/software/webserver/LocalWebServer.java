@@ -7,6 +7,7 @@ import android.text.format.Formatter;
 import com.google.gson.GsonBuilder;
 import com.zugaldia.robocar.software.webserver.models.RobocarMove;
 import com.zugaldia.robocar.software.webserver.models.RobocarResponse;
+import com.zugaldia.robocar.software.webserver.models.RobocarSpeed;
 
 import fi.iki.elonen.NanoHTTPD;
 
@@ -27,6 +28,7 @@ public class LocalWebServer extends NanoHTTPD {
   public static final String ENDPOINT_ROOT = "/";
   public static final String ENDPOINT_GET_STATUS = "api/status";
   public static final String ENDPOINT_POST_MOVE = "api/move";
+  public static final String ENDPOINT_POST_SPEED = "api/speed";
 
   private RequestListener requestListener;
 
@@ -62,6 +64,9 @@ public class LocalWebServer extends NanoHTTPD {
             RobocarMove move = (RobocarMove) readPostAsObject(session, RobocarMove.class);
             result = requestListener.onMove(move);
             break;
+          case ENDPOINT_ROOT + ENDPOINT_POST_SPEED:
+            RobocarSpeed speed = (RobocarSpeed)readPostAsObject(session, RobocarSpeed.class);
+            result = requestListener.onSpeed(speed);
           default:
             // No action.
             break;
