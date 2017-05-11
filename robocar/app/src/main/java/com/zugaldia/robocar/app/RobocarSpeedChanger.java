@@ -34,8 +34,11 @@ class RobocarSpeedChanger {
 
     public void changeSpeed(RobocarSpeed speed) {
 
-        setLeftSpeed(speed.getLeft());
-        setRightSpeed(speed.getRight());
+        if(speed.getLeft()!=null)
+            setLeftSpeed(speed.getLeft());
+
+        if(speed.getRight()!=null)
+            setRightSpeed(speed.getRight());
     }
 
     public void setLeftSpeed(int speed) {
