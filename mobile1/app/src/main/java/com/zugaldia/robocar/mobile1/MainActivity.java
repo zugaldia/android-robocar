@@ -18,8 +18,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.zugaldia.robocar.software.webserver.models.RobocarSpeed;
 
-import java.text.DecimalFormat;
-
 import butterknife.OnTouch;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -41,12 +39,6 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.rightSpeedTextView)
     TextView rightSpeedTextView;
 
-    @BindView(R.id.leftPercentageTextView)
-    TextView leftPercentageTextView;
-
-    @BindView(R.id.rightPercentageTextView)
-    TextView rightPercentageTextView;
-
     @BindView(R.id.upArrowButton)
     ImageButton upArrowButton;
 
@@ -62,6 +54,9 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.webserviceUrlTextView)
     TextView webserviceUrlTextView;
 
+    @BindView(R.id.joystickButton)
+    ImageButton joystickButton;
+
     int lastLeftSpeed = 0;
     int lastRightSpeed = 0;
 
@@ -71,10 +66,6 @@ public class MainActivity extends AppCompatActivity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-
-        // Hide percentage text view. Used only for debugging.
-        leftPercentageTextView.setVisibility(View.GONE);
-        rightPercentageTextView.setVisibility(View.GONE);
     }
 
     @OnTouch({
@@ -83,20 +74,132 @@ public class MainActivity extends AppCompatActivity {
             R.id.leftArrowButton,
             R.id.rightArrowButton,
             R.id.leftButton,
-            R.id.rightButton
+            R.id.rightButton,
+            R.id.joystickButton,
     })
     public boolean onTouch(View v, MotionEvent event) {
         if (v == upArrowButton || v == downArrowButton || v == leftArrowButton || v == rightArrowButton)
             return handleArrowButtonEvent(v, event);
         if (v == leftButton || v == rightButton)
             return handleSlideButtonEvent(v, event);
+        if(v==joystickButton)
+            return handleJoystickButtonEvent(v,event);
         return false;
+    }
+
+    public boolean handleJoystickButtonEvent(View v, MotionEvent event){
+        boolean buttonPressed = (event.getAction() & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_DOWN;
+        boolean buttonReleased = (event.getAction() & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_UP;
+        if(buttonPressed){
+            leftArrowButton.setVisibility(View.GONE);
+            rightArrowButton.setVisibility(View.GONE);
+            upArrowButton.setVisibility(View.GONE);
+            downArrowButton.setVisibility(View.GONE);
+
+            joystickButton.setBackgroundResource(R.drawable.button_joystick);
+        }
+
+        if(buttonReleased){
+            leftArrowButton.setVisibility(View.VISIBLE);
+            rightArrowButton.setVisibility(View.VISIBLE);
+            upArrowButton.setVisibility(View.VISIBLE);
+            downArrowButton.setVisibility(View.VISIBLE);
+            setSpeed(0,0);
+            joystickButton.setBackgroundResource(0);
+            return true;
+        }
+
+        float circleRadius = joystickButton.getMeasuredWidth()/2;
+
+        float xSigned = event.getX() - joystickButton.getMeasuredWidth() /2f ;
+        float ySigned = joystickButton.getMeasuredHeight() / 2f - event.getY();
+        float xUnsigned = Math.abs(xSigned);
+        float yUnsigned = Math.abs(ySigned);
+
+        double touchDistanceToCenter = Math.sqrt(xSigned * xSigned + ySigned * ySigned);
+        if(touchDistanceToCenter<circleRadius*.8){
+            setSpeed(0,0);
+            return true;
+        }
+
+
+        float ySign = ySigned > 0 ? 1 : -1;
+        float xSign = xSigned > 0 ? 1 : -1;
+
+        boolean isForward = false;
+        boolean isBackward = false;
+        boolean isLeft=false;
+        boolean isRight=false;
+
+        if(ySigned>0) {
+            isForward = true;
+            isBackward=false;
+        }
+        else{
+            isForward = false;
+            isBackward = true;
+        }
+        if(xSigned>0){
+            isRight = true;
+            isLeft = false;
+        }
+        else{
+            isRight = false;
+            isLeft = true;
+        }
+
+        int leftSpeed=0;
+        int rightSpeed=0;
+
+        SpeedValueInterpolator svi = new SpeedValueInterpolator()
+                .setValueRange(1.2f,6)
+                .setSpeedRange(100,255)
+                .setSpeedStep(10);
+
+        boolean sameDirection = yUnsigned > xUnsigned;
+        boolean oneReversed = !sameDirection;
+
+        float m = sameDirection ? yUnsigned / (xUnsigned<1e-6f? 1e-6f:xUnsigned): xUnsigned/(yUnsigned<1e-6f?1e-6f:yUnsigned);
+        float lowSpeed = svi.getSpeedForValue(m);
+
+        if(isForward) {
+            if (sameDirection) {
+                if (isLeft)
+                    setSpeed((int) (ySign * lowSpeed), (int) ySign * 255);
+                else
+                    setSpeed((int) (ySign * 255), (int) (ySign * lowSpeed));
+            } else {
+                if (isLeft)
+                    setSpeed((int) (-ySign * lowSpeed), (int) ySign * 255);
+                else
+                    setSpeed((int) (ySign * 255), (int) (-ySign * lowSpeed));
+            }
+        }
+        if(isBackward) {
+            if (sameDirection) {
+                if (isLeft)
+                    setSpeed((int) ySign * 255,(int) (ySign * lowSpeed));
+                else
+                    setSpeed((int) (ySign * lowSpeed),(int) (ySign * 255));
+            } else {
+                if (isLeft)
+                    setSpeed( (int) ySign * 255,(int) (-ySign * lowSpeed));
+                else
+                    setSpeed( (int) (-ySign * lowSpeed), (int) (ySign * 255));
+            }
+        }
+
+//        if(xUnsigned < circleRadius * 0.1f && yUnsigned > circleRadius * 0.8f){
+//            setSpeed(255*ySign,255*ySign);
+//        }
+//        else {
+//            setSpeed(leftSpeed, rightSpeed);
+//        }
+        return true;
     }
 
     public boolean handleArrowButtonEvent(View v, MotionEvent event) {
         boolean buttonReleased = (event.getAction() & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_UP;
-        leftSpeedTextView.setText("");
-        rightSpeedTextView.setText("");
 
         if (buttonReleased) {
             setSpeed(0, 0);
@@ -146,44 +249,36 @@ public class MainActivity extends AppCompatActivity {
 
         int speed = 0;
         if (!buttonReleased)
-            speed = calculateSpeedFromViewTouchEvent(v, event);
+            speed = calculateSpeedFromSliderViewTouchEvent(v, event);
 
         // update only if last speed has changed.
         boolean needsUpdate = (isLeft && lastLeftSpeed != speed) || (isRight && lastRightSpeed != speed);
 
         if (needsUpdate) {
             setSpeed(isLeft ? speed : null, isRight ? speed : null);
-            String message = "Speed:" + speed;
-            textView.setText(message);
+
             if (isLeft) lastLeftSpeed = speed;
             if (isRight) lastRightSpeed = speed;
         }
         return true;
     }
 
-    private int calculateSpeedFromViewTouchEvent(View v, MotionEvent event) {
+    private int calculateSpeedFromSliderViewTouchEvent(View v, MotionEvent event) {
 
         float height = v.getHeight();
+        float halfHeight = height/2;
 
         // Calculate y as a number between -255 (at bottom of the button) to 255 (at the top of the button)
+        // middle=0, top = height, bottom = -height
+        float signedValue = height / 2f - event.getY();
+        float unsignedValue = Math.abs(signedValue);
+        int sign = signedValue < 0 ? -1 : 1;
 
-        // calculate the signed percentage of the y offset from the middle.
-        // middle=0, top=100, bottom=-100
-        float signedPercentage = ((height - event.getY()) - (height / 2)) * 200 / height;
-        DecimalFormat f = new DecimalFormat("##");
-        if (v == leftButton) {
-            leftPercentageTextView.setText("%" + f.format(signedPercentage));
-        }
-        if (v == rightButton) {
-            rightPercentageTextView.setText("%" + f.format(signedPercentage));
-        }
-        return getSpeedFromSignedPercentage((int) signedPercentage);
-    }
-
-    int getSpeedFromSignedPercentage(int signedPercentage) {
-        int sign = signedPercentage < 0 ? -1 : 1;
-        int absPercentage = Math.abs(signedPercentage);
-        int speed = SpeedPercentageMap.getSpeedForPercentage(absPercentage);
+        SpeedValueInterpolator svi = new SpeedValueInterpolator()
+                .setValueRange( halfHeight * 0.1f, halfHeight * 0.8f)
+                .setSpeedRange(100,255)
+                .setSpeedStep(10);
+        int speed = (int) svi.getSpeedForValue(unsignedValue);
         return sign * speed;
     }
 
@@ -218,6 +313,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setSpeed(Integer left, Integer right) {
+        if(left!=null)
+            this.leftSpeedTextView.setText(""+left);
+        if(right!=null)
+            this.rightSpeedTextView.setText(""+right);
+
         RobocarSpeed speed = new RobocarSpeed();
         speed.setLeft(left);
         speed.setRight(right);
