@@ -252,10 +252,11 @@ public class MainActivity extends AppCompatActivity {
             rightSpeed = -SPEED_FULL;
         }
 
-        if(lastLeftSpeed!=leftSpeed)
+        if(lastLeftSpeed != leftSpeed && lastRightSpeed != rightSpeed)
+            setSpeed(leftSpeed,rightSpeed);
+        else if(lastLeftSpeed!=leftSpeed)
             setSpeed(leftSpeed,null);
-
-        if(lastRightSpeed!=rightSpeed)
+        else if(lastRightSpeed!=rightSpeed)
             setSpeed(null,rightSpeed);
 
         lastLeftSpeed = leftSpeed;
