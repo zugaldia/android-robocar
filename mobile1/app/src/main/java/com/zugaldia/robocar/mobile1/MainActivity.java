@@ -122,7 +122,6 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
-
         float ySign = ySigned > 0 ? 1 : -1;
         float xSign = xSigned > 0 ? 1 : -1;
 
@@ -148,16 +147,12 @@ public class MainActivity extends AppCompatActivity {
             isLeft = true;
         }
 
-        int leftSpeed=0;
-        int rightSpeed=0;
-
         SpeedValueInterpolator svi = new SpeedValueInterpolator()
                 .setValueRange(1.2f,6)
                 .setSpeedRange(100,255)
                 .setSpeedStep(10);
 
         boolean sameDirection = yUnsigned > xUnsigned;
-        boolean oneReversed = !sameDirection;
 
         float m = sameDirection ? yUnsigned / (xUnsigned<1e-6f? 1e-6f:xUnsigned): xUnsigned/(yUnsigned<1e-6f?1e-6f:yUnsigned);
         float lowSpeed = svi.getSpeedForValue(m);
@@ -189,12 +184,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-//        if(xUnsigned < circleRadius * 0.1f && yUnsigned > circleRadius * 0.8f){
-//            setSpeed(255*ySign,255*ySign);
-//        }
-//        else {
-//            setSpeed(leftSpeed, rightSpeed);
-//        }
         return true;
     }
 
