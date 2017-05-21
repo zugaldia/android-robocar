@@ -60,6 +60,9 @@ public class MainActivity extends AppCompatActivity {
     int lastLeftSpeed = 0;
     int lastRightSpeed = 0;
 
+    int SPEED_FULL = 255;
+    int SPEED_LOW = 95;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -149,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
 
         SpeedValueInterpolator svi = new SpeedValueInterpolator()
                 .setValueRange(1.2f,6)
-                .setSpeedRange(100,255)
+                .setSpeedRange(SPEED_LOW,SPEED_FULL)
                 .setSpeedStep(10);
 
         boolean sameDirection = yUnsigned > xUnsigned;
@@ -160,58 +163,105 @@ public class MainActivity extends AppCompatActivity {
         if(isForward) {
             if (sameDirection) {
                 if (isLeft)
-                    setSpeed((int) (ySign * lowSpeed), (int) ySign * 255);
+                    setSpeed((int) (ySign * lowSpeed), (int) ySign * SPEED_FULL);
                 else
-                    setSpeed((int) (ySign * 255), (int) (ySign * lowSpeed));
+                    setSpeed((int) (ySign * SPEED_FULL), (int) (ySign * lowSpeed));
             } else {
                 if (isLeft)
-                    setSpeed((int) (-ySign * lowSpeed), (int) ySign * 255);
+                    setSpeed((int) (-ySign * lowSpeed), (int) ySign * SPEED_FULL);
                 else
-                    setSpeed((int) (ySign * 255), (int) (-ySign * lowSpeed));
+                    setSpeed((int) (ySign * SPEED_FULL), (int) (-ySign * lowSpeed));
             }
         }
         if(isBackward) {
             if (sameDirection) {
                 if (isLeft)
-                    setSpeed((int) ySign * 255,(int) (ySign * lowSpeed));
+                    setSpeed((int) ySign * SPEED_FULL,(int) (ySign * lowSpeed));
                 else
-                    setSpeed((int) (ySign * lowSpeed),(int) (ySign * 255));
+                    setSpeed((int) (ySign * lowSpeed),(int) (ySign * SPEED_FULL));
             } else {
                 if (isLeft)
-                    setSpeed( (int) ySign * 255,(int) (-ySign * lowSpeed));
+                    setSpeed( (int) ySign * SPEED_FULL,(int) (-ySign * lowSpeed));
                 else
-                    setSpeed( (int) (-ySign * lowSpeed), (int) (ySign * 255));
+                    setSpeed( (int) (-ySign * lowSpeed), (int) (ySign * SPEED_FULL));
             }
         }
 
         return true;
     }
 
+    boolean isUpArrowPressed = false;
+    boolean isDownArrowPressed = false;
+    boolean isLeftArrowPressed = false;
+    boolean isRightArrowPressed = false;
+
+    private boolean isArrowButtonPressed(boolean currentPressedState, MotionEvent event){
+        boolean isPressed = currentPressedState;
+        if((event.getAction() & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_DOWN) {
+            isPressed = true;
+        }
+        if((event.getAction() & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_UP) {
+            isPressed = false;
+        }
+        return isPressed;
+    }
+
+    private void setArrowButtonStates(View v, MotionEvent event){
+
+        if(v == this.upArrowButton)
+            this.isUpArrowPressed = isArrowButtonPressed(this.isUpArrowPressed,event);
+
+        if(v == this.downArrowButton)
+            this.isDownArrowPressed = isArrowButtonPressed(this.isDownArrowPressed,event);
+
+        if(v == this.leftArrowButton)
+            this.isLeftArrowPressed = isArrowButtonPressed(this.isLeftArrowPressed,event);
+
+        if(v == this.rightArrowButton)
+            this.isRightArrowPressed = isArrowButtonPressed(this.isRightArrowPressed,event);
+    }
+
     public boolean handleArrowButtonEvent(View v, MotionEvent event) {
-        boolean buttonReleased = (event.getAction() & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_UP;
 
-        if (buttonReleased) {
-            setSpeed(0, 0);
-            return true;
+        setArrowButtonStates(v, event);
+
+        boolean allReleased = !isUpArrowPressed && !isDownArrowPressed && !isLeftArrowPressed && !isRightArrowPressed;
+
+        int leftSpeed = 0;
+        int rightSpeed = 0;
+
+        if (allReleased) {
+            leftSpeed = 0;
+            rightSpeed = 0;
         }
 
-        if (v == upArrowButton) {
-            setSpeed(255, 255);
-            return true;
+        if(isUpArrowPressed){
+            leftSpeed = isLeftArrowPressed?SPEED_LOW:SPEED_FULL;
+            rightSpeed = isRightArrowPressed?SPEED_LOW:SPEED_FULL;
         }
-        if (v == downArrowButton) {
-            setSpeed(-255, -255);
-            return true;
+        else if(isDownArrowPressed){
+            leftSpeed = isLeftArrowPressed?-SPEED_LOW:-SPEED_FULL;
+            rightSpeed = isRightArrowPressed?-SPEED_LOW:-SPEED_FULL;
         }
-        if (v == leftArrowButton) {
-            setSpeed(-255, 255);
-            return true;
+        else if(isLeftArrowPressed){
+            leftSpeed=-SPEED_FULL;
+            rightSpeed=SPEED_FULL;
         }
-        if (v == rightArrowButton) {
-            setSpeed(255, -255);
-            return true;
+        else if(isRightArrowPressed){
+            leftSpeed = SPEED_FULL;
+            rightSpeed = -SPEED_FULL;
         }
-        return false;
+
+        if(lastLeftSpeed!=leftSpeed)
+            setSpeed(leftSpeed,null);
+
+        if(lastRightSpeed!=rightSpeed)
+            setSpeed(null,rightSpeed);
+
+        lastLeftSpeed = leftSpeed;
+        lastRightSpeed = rightSpeed;
+
+        return true;
     }
 
     public boolean handleSlideButtonEvent(View v, MotionEvent event) {
@@ -257,7 +307,7 @@ public class MainActivity extends AppCompatActivity {
         float height = v.getHeight();
         float halfHeight = height/2;
 
-        // Calculate y as a number between -255 (at bottom of the button) to 255 (at the top of the button)
+        // Calculate y as a number between -SPEED_FULL (at bottom of the button) to SPEED_FULL (at the top of the button)
         // middle=0, top = height, bottom = -height
         float signedValue = height / 2f - event.getY();
         float unsignedValue = Math.abs(signedValue);
@@ -265,7 +315,7 @@ public class MainActivity extends AppCompatActivity {
 
         SpeedValueInterpolator svi = new SpeedValueInterpolator()
                 .setValueRange( halfHeight * 0.1f, halfHeight * 0.8f)
-                .setSpeedRange(100,255)
+                .setSpeedRange(SPEED_LOW,SPEED_FULL)
                 .setSpeedStep(10);
         int speed = (int) svi.getSpeedForValue(unsignedValue);
         return sign * speed;
