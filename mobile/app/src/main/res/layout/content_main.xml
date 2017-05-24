@@ -7,7 +7,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="com.zugaldia.robocar.mobile.MainActivity"
+    tools:context="com.zugaldia.robocar.mobile.debug.DebugActivity"
     tools:showIn="@layout/app_bar_main">
 
     <LinearLayout
