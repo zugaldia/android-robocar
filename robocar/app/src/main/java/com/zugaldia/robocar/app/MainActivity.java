@@ -7,6 +7,8 @@ import android.view.KeyEvent;
 
 import com.zugaldia.robocar.hardware.adafruit2348.AdafruitDcMotor;
 import com.zugaldia.robocar.hardware.adafruit2348.AdafruitMotorHat;
+import com.zugaldia.robocar.software.camera.CameraOperator;
+import com.zugaldia.robocar.software.camera.SpeedOwner;
 import com.zugaldia.robocar.software.controller.nes30.Nes30Connection;
 import com.zugaldia.robocar.software.controller.nes30.Nes30Listener;
 import com.zugaldia.robocar.software.controller.nes30.Nes30Manager;
@@ -18,13 +20,11 @@ import com.zugaldia.robocar.software.webserver.models.RobocarSpeed;
 import com.zugaldia.robocar.software.webserver.models.RobocarStatus;
 
 import fi.iki.elonen.NanoHTTPD;
-
 import java.io.IOException;
-
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity
-    implements Nes30Listener, RequestListener {
+    implements Nes30Listener, RequestListener, SpeedOwner {
 
   // Set the speed, from 0 (off) to 255 (max speed)
   private static final int MOTOR_SPEED = 255;
@@ -48,6 +48,8 @@ public class MainActivity extends AppCompatActivity
   private boolean isUpOrDownPressed = false;
   private boolean allButtonsReleased = true;
 
+  private CameraOperator cameraOperator;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -68,6 +70,18 @@ public class MainActivity extends AppCompatActivity
 
     // NES30 BT connection
     setupBluetooth();
+
+    // Camera
+    cameraOperator = new CameraOperator(this);
+  }
+
+  @Override
+  public int[] getSpeeds() {
+    return new int[] {
+        motorHat.getMotor(0).getLastSpeed(),
+        motorHat.getMotor(1).getLastSpeed(),
+        motorHat.getMotor(2).getLastSpeed(),
+        motorHat.getMotor(3).getLastSpeed()};
   }
 
   private void setMotorSpeedsBasedOnButtonsPressed() {
@@ -113,6 +127,7 @@ public class MainActivity extends AppCompatActivity
     release();
     motorHat.close();
     nes30Connection.cancelDiscovery();
+    cameraOperator.shutDown();
   }
 
   /*
@@ -141,9 +156,7 @@ public class MainActivity extends AppCompatActivity
 
   @Override
   public void onKeyPress(@Nes30Manager.ButtonCode int keyCode, boolean isDown) {
-
     updateButtonPressedStates(keyCode, isDown);
-
 
     if (allButtonsReleased && isMoving) {
       isMoving = false;
@@ -170,6 +183,24 @@ public class MainActivity extends AppCompatActivity
       case Nes30Manager.BUTTON_RIGHT_CODE:
         if (!isUpOrDownPressed) {
           turnRight();
+        }
+        break;
+      case Nes30Manager.BUTTON_X_CODE:
+        if (isDown) {
+          Timber.d("Taking picture.");
+          cameraOperator.takePicture();
+        }
+        break;
+      case Nes30Manager.BUTTON_Y_CODE:
+        if (isDown) {
+          Timber.d("Starting training session.");
+          cameraOperator.startTrainingSession(this);
+        }
+        break;
+      case Nes30Manager.BUTTON_A_CODE:
+        if (isDown) {
+          Timber.d("Stopping training session.");
+          cameraOperator.stopTrainingSession();
         }
         break;
       case Nes30Manager.BUTTON_KONAMI:
@@ -262,9 +293,11 @@ public class MainActivity extends AppCompatActivity
 
   @Override
   public RobocarResponse onSpeed(RobocarSpeed speed) {
-    if(speed==null)
-      return new RobocarResponse(400,"Bad Request");
-    RobocarSpeedChanger speedChanger = new RobocarSpeedChanger(motorFrontLeft, motorFrontRight, motorBackLeft, motorBackRight);
+    if (speed == null) {
+      return new RobocarResponse(400, "Bad Request");
+    }
+    RobocarSpeedChanger speedChanger = new RobocarSpeedChanger(
+        motorFrontLeft, motorFrontRight, motorBackLeft, motorBackRight);
     speedChanger.changeSpeed(speed);
     return new RobocarResponse(200, "OK");
   }

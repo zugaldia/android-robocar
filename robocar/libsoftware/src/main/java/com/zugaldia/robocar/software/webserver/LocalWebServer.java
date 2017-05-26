@@ -67,6 +67,7 @@ public class LocalWebServer extends NanoHTTPD {
           case ENDPOINT_ROOT + ENDPOINT_POST_SPEED:
             RobocarSpeed speed = (RobocarSpeed)readPostAsObject(session, RobocarSpeed.class);
             result = requestListener.onSpeed(speed);
+            break;
           default:
             // No action.
             break;

@@ -1,0 +1,10 @@
+.idea
+
+# Training data
+__MACOSX
+data/
+data.zip
+model.h5
+model.json
+model.pb
+model.png
