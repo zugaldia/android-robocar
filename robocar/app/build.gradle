@@ -44,7 +44,7 @@ dependencies {
     // Our shared libraries
     compile project(':libhardware')
     compile project(':libsoftware')
-    compile project(':libcv')
+    //compile project(':libcv')
 
     // Android Support Libraries
     compile 'com.android.support:appcompat-v7:25.3.1'

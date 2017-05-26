@@ -2,17 +2,16 @@ package com.zugaldia.robocar.hardware.adafruit2348;
 
 /**
  * A port of `Adafruit_DCMotor` to Android Things.
- *
- * <p>See: https://github.com/adafruit/Adafruit-Motor-HAT-Python-Library/blob/master/Adafruit_MotorHAT/Adafruit_MotorHAT.py
+ * See: https://github.com/adafruit/Adafruit-Motor-HAT-Python-Library/blob/master/Adafruit_MotorHAT/Adafruit_MotorHAT.py
  */
 public class AdafruitDcMotor {
 
   private AdafruitMotorHat mc;
   private int motornum;
-  int pwmPin;
-  int in1Pin;
-  int in2Pin;
-  int lastSpeed = -1;
+  private int pwmPin;
+  private int in1Pin;
+  private int in2Pin;
+  private int lastSpeed = -1;
 
   /**
    * Public constructor.
@@ -78,5 +77,9 @@ public class AdafruitDcMotor {
     }
 
     lastSpeed = speed;
+  }
+
+  public int getLastSpeed() {
+    return lastSpeed;
   }
 }
