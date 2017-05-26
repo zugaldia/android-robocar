@@ -1,7 +1,7 @@
 test:
     pre:
         - echo y | android update sdk --no-ui --all --filter "build-tools-25.0.3"
-        - echo y | $ANDROID_HOME/tools/bin/sdkmanager "extras;m2repository;com;android;support;constraint;constraint-layout-solver;1.0.2"
+        - echo y | sdkmanager "extras;m2repository;com;android;support;constraint;constraint-layout-solver;1.0.2"
     override:
         - make test
         - make checkstyle
