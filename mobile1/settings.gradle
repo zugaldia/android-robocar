@@ -1,7 +1,0 @@
-include ':app'
-
-include ":libsoftware"
-project(":libsoftware").projectDir = file("../robocar/libsoftware")
-
-include ":libcv"
-project(":libcv").projectDir = file("../robocar/libcv")
