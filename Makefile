@@ -11,6 +11,10 @@ flash:
 connect:
 	adb connect Android.local
 
+clean:
+	cd robocar; ./gradlew clean
+	cd mobile; ./gradlew clean
+
 test:
 	cd robocar; ./gradlew test
 	cd mobile; ./gradlew :app:test
