@@ -79,4 +79,8 @@ public class AdafruitDcMotor {
 
     lastSpeed = speed;
   }
+
+  public int getLastSpeed() {
+    return lastSpeed;
+  }
 }
