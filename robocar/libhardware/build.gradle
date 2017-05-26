@@ -31,9 +31,6 @@ dependencies {
     // Logging
     compile 'com.jakewharton.timber:timber:4.5.1'
 
-    // Logging
-    compile 'com.jakewharton.timber:timber:4.5.1'
-
     // Testing
     testCompile 'junit:junit:4.12'
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
