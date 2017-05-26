@@ -11,70 +11,73 @@ import com.zugaldia.robocar.software.webserver.models.RobocarSpeed;
 
 class RobocarSpeedChanger {
 
-    private static final int MIN_SPEED = 64;// If speed was set too low, the motor could burn.
+  // If speed was set too low, the motor could burn.
+  private static final int MIN_SPEED = 64;
 
-    private AdafruitDcMotor motorFrontLeft;
-    private AdafruitDcMotor motorFrontRight;
-    private AdafruitDcMotor motorBackLeft;
-    private AdafruitDcMotor motorBackRight;
+  private AdafruitDcMotor motorFrontLeft;
+  private AdafruitDcMotor motorFrontRight;
+  private AdafruitDcMotor motorBackLeft;
+  private AdafruitDcMotor motorBackRight;
 
+  public RobocarSpeedChanger(
+    AdafruitDcMotor motorFrontLeft,
+    AdafruitDcMotor motorFrontRight,
+    AdafruitDcMotor motorBackLeft,
+    AdafruitDcMotor motorBackRight) {
 
-    public RobocarSpeedChanger(
-            AdafruitDcMotor motorFrontLeft,
-            AdafruitDcMotor motorFrontRight,
-            AdafruitDcMotor motorBackLeft,
-            AdafruitDcMotor motorBackRight) {
+    this.motorFrontLeft = motorFrontLeft;
+    this.motorFrontRight = motorFrontRight;
+    this.motorBackLeft = motorBackLeft;
+    this.motorBackRight = motorBackRight;
+  }
 
+  public void changeSpeed(RobocarSpeed speed) {
 
-        this.motorFrontLeft = motorFrontLeft;
-        this.motorFrontRight = motorFrontRight;
-        this.motorBackLeft = motorBackLeft;
-        this.motorBackRight = motorBackRight;
+    if (speed.getLeft() != null) {
+      setLeftSpeed(speed.getLeft());
     }
 
-    public void changeSpeed(RobocarSpeed speed) {
+    if (speed.getRight() != null) {
+      setRightSpeed(speed.getRight());
+    }
+  }
 
-        if(speed.getLeft()!=null)
-            setLeftSpeed(speed.getLeft());
+  public void setLeftSpeed(int speed) {
 
-        if(speed.getRight()!=null)
-            setRightSpeed(speed.getRight());
+    int unsignedSpeed = Math.abs(speed);
+    if (unsignedSpeed < MIN_SPEED) {
+      unsignedSpeed = 0;
     }
 
-    public void setLeftSpeed(int speed) {
+    motorBackLeft.setSpeed(unsignedSpeed);
+    motorFrontLeft.setSpeed(unsignedSpeed);
 
-        int unsignedSpeed = Math.abs(speed);
-        if(unsignedSpeed < MIN_SPEED) unsignedSpeed = 0;
+    if (speed > 0) { // Positive speed motor directions
+      motorFrontLeft.run(AdafruitMotorHat.FORWARD);
+      motorBackLeft.run(AdafruitMotorHat.BACKWARD);
+    } else { // Negative speed motor directions
+      motorFrontLeft.run(AdafruitMotorHat.BACKWARD);
+      motorBackLeft.run(AdafruitMotorHat.FORWARD);
+    }
+  }
 
-        motorBackLeft.setSpeed(unsignedSpeed);
-        motorFrontLeft.setSpeed(unsignedSpeed);
+  public void setRightSpeed(int speed) {
 
-        if(speed >0){ // Positive speed motor directions
-            motorFrontLeft.run(AdafruitMotorHat.FORWARD);
-            motorBackLeft.run(AdafruitMotorHat.BACKWARD);
-        }
-        else{ // Nevagive speed motor directions
-            motorFrontLeft.run(AdafruitMotorHat.BACKWARD);
-            motorBackLeft.run(AdafruitMotorHat.FORWARD);
-        }
+    int unsignedSpeed = Math.abs(speed);
+    if (unsignedSpeed < MIN_SPEED) {
+      unsignedSpeed = 0;
     }
 
-    public void setRightSpeed(int speed) {
+    motorBackRight.setSpeed(unsignedSpeed);
+    motorFrontRight.setSpeed(unsignedSpeed);
 
-        int unsignedSpeed = Math.abs(speed);
-        if(unsignedSpeed < MIN_SPEED) unsignedSpeed = 0;
-
-        motorBackRight.setSpeed(unsignedSpeed);
-        motorFrontRight.setSpeed(unsignedSpeed);
-
-        if(speed>0){ // Positive speed motor directions
-            motorFrontRight.run(AdafruitMotorHat.BACKWARD);
-            motorBackRight.run(AdafruitMotorHat.FORWARD);
-        }
-        else{ // Nevagive speed motor directions
-            motorFrontRight.run(AdafruitMotorHat.FORWARD);
-            motorBackRight.run(AdafruitMotorHat.BACKWARD);
-        }
-
+    if (speed > 0) { // Positive speed motor directions
+      motorFrontRight.run(AdafruitMotorHat.BACKWARD);
+      motorBackRight.run(AdafruitMotorHat.FORWARD);
+    } else { // Negative speed motor directions
+      motorFrontRight.run(AdafruitMotorHat.FORWARD);
+      motorBackRight.run(AdafruitMotorHat.BACKWARD);
     }
+
+  }
 }

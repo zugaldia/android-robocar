@@ -8,6 +8,7 @@ import android.view.KeyEvent;
 import com.zugaldia.robocar.hardware.adafruit2348.AdafruitDcMotor;
 import com.zugaldia.robocar.hardware.adafruit2348.AdafruitMotorHat;
 import com.zugaldia.robocar.software.camera.CameraOperator;
+import com.zugaldia.robocar.software.camera.SpeedOwner;
 import com.zugaldia.robocar.software.controller.nes30.Nes30Connection;
 import com.zugaldia.robocar.software.controller.nes30.Nes30Listener;
 import com.zugaldia.robocar.software.controller.nes30.Nes30Manager;
@@ -24,7 +25,7 @@ import fi.iki.elonen.NanoHTTPD;
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity
-    implements Nes30Listener, RequestListener {
+    implements Nes30Listener, RequestListener, SpeedOwner {
 
   // Set the speed, from 0 (off) to 255 (max speed)
   private static final int MOTOR_SPEED = 255;
@@ -73,6 +74,15 @@ public class MainActivity extends AppCompatActivity
 
     // Camera
     cameraOperator = new CameraOperator(this);
+  }
+
+  @Override
+  public int[] getSpeeds() {
+    return new int[] {
+        motorHat.getMotor(0).getLastSpeed(),
+        motorHat.getMotor(1).getLastSpeed(),
+        motorHat.getMotor(2).getLastSpeed(),
+        motorHat.getMotor(3).getLastSpeed()};
   }
 
   private void setMotorSpeedsBasedOnButtonsPressed() {
@@ -185,7 +195,7 @@ public class MainActivity extends AppCompatActivity
       case Nes30Manager.BUTTON_Y_CODE:
         if (isDown) {
           Timber.d("Starting training session.");
-          cameraOperator.startTrainingSession(motorHat);
+          cameraOperator.startTrainingSession(this);
         }
         break;
       case Nes30Manager.BUTTON_A_CODE:

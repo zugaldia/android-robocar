@@ -4,19 +4,18 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.media.Image;
-import android.os.Environment;
-
-import junit.framework.Assert;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 
+import junit.framework.Assert;
+
 import timber.log.Timber;
 
 /**
- * Utility class for manipulating images. Based on:
- * https://github.com/androidthings/sample-tensorflow-imageclassifier/blob/master/app/src/main/java/com/example/androidthings/imageclassifier/env/ImageUtils.java
+ * Utility class for manipulating images.
+ * Based on: https://github.com/androidthings/sample-tensorflow-imageclassifier/blob/master/app/src/main/java/com/example/androidthings/imageclassifier/env/ImageUtils.java
  **/
 public class ImageUtils {
   // This value is 2 ^ 18 - 1, and is used to clamp the RGB values before their ranges
@@ -27,7 +26,7 @@ public class ImageUtils {
    * Utility method to compute the allocated size in bytes of a YUV420SP image
    * of the given dimensions.
    */
-  public static int getYUVByteSize(final int width, final int height) {
+  public static int getYuvByteSize(final int width, final int height) {
     // The luminance plane requires 1 byte per pixel.
     final int ySize = width * height;
 
@@ -61,7 +60,11 @@ public class ImageUtils {
     }
   }
 
-  public static int[] convertImageToBitmap(Image image, int[] output, byte[][] cachedYuvBytes) {
+  /**
+   * Converts an image into a bitmap.
+   */
+  public static int[] convertImageToBitmap(
+      Image image, int[] output, byte[][] cachedYuvBytes) {
     if (cachedYuvBytes == null || cachedYuvBytes.length != 3) {
       cachedYuvBytes = new byte[3][];
     }
@@ -72,26 +75,28 @@ public class ImageUtils {
     final int uvRowStride = planes[1].getRowStride();
     final int uvPixelStride = planes[1].getPixelStride();
 
-    convertYUV420ToARGB8888(cachedYuvBytes[0], cachedYuvBytes[1], cachedYuvBytes[2],
-        image.getWidth(), image.getHeight(), yRowStride, uvRowStride, uvPixelStride, output);
+    convertYuv420ToArgb8888(cachedYuvBytes[0], cachedYuvBytes[1], cachedYuvBytes[2],
+        image.getWidth(), image.getHeight(), yRowStride, uvRowStride, uvPixelStride,
+        output);
     return output;
   }
 
-  private static void convertYUV420ToARGB8888(byte[] yData, byte[] uData, byte[] vData, int width, int height,
-                                              int yRowStride, int uvRowStride, int uvPixelStride, int[] out) {
+  private static void convertYuv420ToArgb8888(byte[] ydata, byte[] udata, byte[] vdata,
+                                              int width, int height, int yrowstride,
+                                              int uvRowStride, int uvPixelStride, int[] out) {
     int i = 0;
     for (int y = 0; y < height; y++) {
-      int pY = yRowStride * y;
-      int uv_row_start = uvRowStride * (y >> 1);
-      int pU = uv_row_start;
-      int pV = uv_row_start;
+      int py = yrowstride * y;
+      int uvRowStart = uvRowStride * (y >> 1);
+      int pu = uvRowStart;
+      int pv = uvRowStart;
 
       for (int x = 0; x < width; x++) {
-        int uv_offset = (x >> 1) * uvPixelStride;
-        out[i++] = YUV2RGB(
-            convertByteToInt(yData, pY + x),
-            convertByteToInt(uData, pU + uv_offset),
-            convertByteToInt(vData, pV + uv_offset));
+        int uvOffset = (x >> 1) * uvPixelStride;
+        out[i++] = yuv2rgb(
+            convertByteToInt(ydata, py + x),
+            convertByteToInt(udata, pu + uvOffset),
+            convertByteToInt(vdata, pv + uvOffset));
       }
     }
   }
@@ -100,12 +105,12 @@ public class ImageUtils {
     return arr[pos] & 0xFF;
   }
 
-  private static int YUV2RGB(int nY, int nU, int nV) {
-    nY -= 16;
-    nU -= 128;
-    nV -= 128;
-    if (nY < 0) {
-      nY = 0;
+  private static int yuv2rgb(int ny, int nu, int nv) {
+    ny -= 16;
+    nu -= 128;
+    nv -= 128;
+    if (ny < 0) {
+      ny = 0;
     }
 
     // This is the floating point equivalent. We do the conversion in integer
@@ -114,19 +119,19 @@ public class ImageUtils {
     // nG = (int)(1.164 * nY - 0.813 * nV - 0.391 * nU);
     // nB = (int)(1.164 * nY + 1.596 * nV);
 
-    int nR = (int) (1192 * nY + 1634 * nV);
-    int nG = (int) (1192 * nY - 833 * nV - 400 * nU);
-    int nB = (int) (1192 * nY + 2066 * nU);
+    int nr = (int) (1192 * ny + 1634 * nv);
+    int ng = (int) (1192 * ny - 833 * nv - 400 * nu);
+    int nb = (int) (1192 * ny + 2066 * nu);
 
-    nR = Math.min(kMaxChannelValue, Math.max(0, nR));
-    nG = Math.min(kMaxChannelValue, Math.max(0, nG));
-    nB = Math.min(kMaxChannelValue, Math.max(0, nB));
+    nr = Math.min(kMaxChannelValue, Math.max(0, nr));
+    ng = Math.min(kMaxChannelValue, Math.max(0, ng));
+    nb = Math.min(kMaxChannelValue, Math.max(0, nb));
 
-    nR = (nR >> 10) & 0xff;
-    nG = (nG >> 10) & 0xff;
-    nB = (nB >> 10) & 0xff;
+    nr = (nr >> 10) & 0xff;
+    ng = (ng >> 10) & 0xff;
+    nb = (nb >> 10) & 0xff;
 
-    return 0xff000000 | (nR << 16) | (nG << 8) | nB;
+    return 0xff000000 | (nr << 16) | (ng << 8) | nb;
   }
 
   private static void fillBytes(final Image.Plane[] planes, final byte[][] yuvBytes) {
@@ -141,7 +146,11 @@ public class ImageUtils {
     }
   }
 
-  public static void cropAndRescaleBitmap(final Bitmap src, final Bitmap dst, int sensorOrientation) {
+  /**
+   * Crops and rescales and image for TensorFlow.
+   */
+  public static void cropAndRescaleBitmap(
+      final Bitmap src, final Bitmap dst, int sensorOrientation) {
     Assert.assertEquals(dst.getWidth(), dst.getHeight());
     final float minDim = Math.min(src.getWidth(), src.getHeight());
 

@@ -8,7 +8,6 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 
-import com.zugaldia.robocar.hardware.adafruit2348.AdafruitMotorHat;
 import com.zugaldia.robocar.software.camera.utils.CameraHandler;
 import com.zugaldia.robocar.software.camera.utils.ImagePreprocessor;
 import com.zugaldia.robocar.software.camera.utils.ImageUtils;
@@ -38,16 +37,19 @@ public class CameraOperator implements ImageReader.OnImageAvailableListener {
 
   private boolean inTraining = false;
 
+  /**
+   * Constructor.
+   */
   public CameraOperator(Context context) {
     this.context = context;
     HandlerThread backgroundThread = new HandlerThread("BackgroundThread");
     backgroundThread.start();
     backgroundHandler = new Handler(backgroundThread.getLooper());
-    backgroundHandler.post(mInitializeOnBackground);
+    backgroundHandler.post(initializeOnBackground);
     folder = getAlbumStorageDir("robocar");
   }
 
-  private Runnable mInitializeOnBackground = new Runnable() {
+  private Runnable initializeOnBackground = new Runnable() {
     @Override
     public void run() {
       imagePreprocessor = new ImagePreprocessor(
@@ -68,26 +70,25 @@ public class CameraOperator implements ImageReader.OnImageAvailableListener {
     cameraHandler.takePicture();
   }
 
-  public void startTrainingSession(final AdafruitMotorHat motorHat) {
+  /**
+   * Starts a training session.
+   */
+  public void startTrainingSession(final SpeedOwner speedOwner) {
     if (inTraining) {
       return;
     }
     inTraining = true;
 
     final String sessionId = UUID.randomUUID().toString().replace("-", "");
-    final int[] speeds = new int[] {1, 20, 300, 0};
     final int[] count = new int[] {0};
     final long delayMillis = 1000;
-
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
+        int[] speeds = speedOwner.getSpeeds();
         currentFilename = String.format(Locale.US,
             "robocar-%s-%d-%d-%d-%d-%d.jpg", sessionId, count[0],
-            motorHat.getMotor(0).getLastSpeed(),
-            motorHat.getMotor(1).getLastSpeed(),
-            motorHat.getMotor(2).getLastSpeed(),
-            motorHat.getMotor(3).getLastSpeed());
+            speeds[0], speeds[1], speeds[2], speeds[3]);
         Timber.d("Capturing picture: %s", currentFilename);
         cameraHandler.takePicture();
         count[0]++;
@@ -98,6 +99,9 @@ public class CameraOperator implements ImageReader.OnImageAvailableListener {
     backgroundHandler.postDelayed(runnable, delayMillis);
   }
 
+  /**
+   * Stops a training session.
+   */
   public void stopTrainingSession() {
     if (!inTraining) {
       return;
@@ -119,7 +123,9 @@ public class CameraOperator implements ImageReader.OnImageAvailableListener {
     ImageUtils.saveBitmap(bitmap, folder.getAbsolutePath(), currentFilename);
   }
 
-  /* Checks if external storage is available for read and write */
+  /**
+   * Checks if external storage is available for read and write.
+   */
   public boolean isExternalStorageWritable() {
     String state = Environment.getExternalStorageState();
     if (Environment.MEDIA_MOUNTED.equals(state)) {
@@ -128,20 +134,25 @@ public class CameraOperator implements ImageReader.OnImageAvailableListener {
     return false;
   }
 
-  /* Checks if external storage is available to at least read */
+  /**
+   * Checks if external storage is available to at least.
+   */
   public boolean isExternalStorageReadable() {
     String state = Environment.getExternalStorageState();
-    if (Environment.MEDIA_MOUNTED.equals(state) ||
-        Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+    if (Environment.MEDIA_MOUNTED.equals(state)
+        || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
       return true;
     }
     return false;
   }
 
+  /**
+   * Get the directory for the user's public pictures directory.
+   * This is /storage/emulated/0/Pictures/robocar
+   */
   public File getAlbumStorageDir(String folder) {
-    // Get the directory for the user's public pictures directory.
-    // This is /storage/emulated/0/Pictures/robocar
-    File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), folder);
+    File file = new File(Environment.getExternalStoragePublicDirectory(
+        Environment.DIRECTORY_PICTURES), folder);
     if (!file.mkdirs()) {
       Timber.e("mkdirs failed for: %s.", file.getAbsolutePath());
     }

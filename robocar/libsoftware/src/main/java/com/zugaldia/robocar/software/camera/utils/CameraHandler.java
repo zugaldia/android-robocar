@@ -17,14 +17,11 @@ import android.media.ImageReader;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.util.Log;
 import android.util.Size;
 
 import java.util.Collections;
 
 import timber.log.Timber;
-
-import static android.content.Context.CAMERA_SERVICE;
 
 /**
  * Based on https://github.com/androidthings/sample-tensorflow-imageclassifier/blob/master/app/src/main/java/com/example/androidthings/imageclassifier/CameraHandler.java
@@ -32,16 +29,19 @@ import static android.content.Context.CAMERA_SERVICE;
 public class CameraHandler {
   public static final int IMAGE_WIDTH = 320;
   public static final int IMAGE_HEIGHT = 240;
-
   private static final int MAX_IMAGES = 1;
-  private CameraDevice mCameraDevice;
-  private CameraCaptureSession mCaptureSession;
+
+  private CameraDevice cameraDevice;
+  private CameraCaptureSession captureSession;
+
   /**
    * An {@link android.media.ImageReader} that handles still image capture.
    */
-  private ImageReader mImageReader;
+  private ImageReader imageReader;
 
-  // Lazy-loaded singleton, so only one instance of the camera is created.
+  /**
+   * Lazy-loaded singleton, so only one instance of the camera is created.
+   */
   private CameraHandler() {
   }
 
@@ -54,7 +54,7 @@ public class CameraHandler {
   }
 
   /**
-   * Initialize the camera device
+   * Initialize the camera device.
    */
   public void initializeCamera(Context context,
                                Handler backgroundHandler,
@@ -65,41 +65,42 @@ public class CameraHandler {
     try {
       camIds = manager.getCameraIdList();
     } catch (CameraAccessException e) {
-      Timber.e(e, "Cam access exception getting IDs");
+      Timber.e(e, "Camera access exception getting IDs.");
     }
     if (camIds.length < 1) {
-      Timber.d("No cameras found");
+      Timber.d("No cameras found.");
       return;
     }
     String id = camIds[0];
-    Timber.d("Using camera id " + id);
+    Timber.d("Using camera id: %d.", id);
 
     // Initialize the image processor
-    mImageReader = ImageReader.newInstance(IMAGE_WIDTH, IMAGE_HEIGHT,
+    imageReader = ImageReader.newInstance(IMAGE_WIDTH, IMAGE_HEIGHT,
         ImageFormat.YUV_420_888, MAX_IMAGES);
-    mImageReader.setOnImageAvailableListener(
+    imageReader.setOnImageAvailableListener(
         imageAvailableListener, backgroundHandler);
 
     // Open the camera resource
     try {
-      if (ActivityCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+      if (ActivityCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+          != PackageManager.PERMISSION_GRANTED) {
         Timber.d("Permission to use the camera has not been granted, try rebooting your Robocar.");
         return;
       }
-      manager.openCamera(id, mStateCallback, backgroundHandler);
+      manager.openCamera(id, stateCallback, backgroundHandler);
     } catch (CameraAccessException cae) {
       Timber.d("Camera access exception", cae);
     }
   }
 
   /**
-   * Callback handling device state changes
+   * Callback handling device state changes.
    */
-  private final CameraDevice.StateCallback mStateCallback = new CameraDevice.StateCallback() {
+  private final CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
     @Override
     public void onOpened(@NonNull CameraDevice cameraDevice) {
       Timber.d("Opened camera.");
-      mCameraDevice = cameraDevice;
+      CameraHandler.this.cameraDevice = cameraDevice;
     }
 
     @Override
@@ -119,24 +120,24 @@ public class CameraHandler {
     @Override
     public void onClosed(@NonNull CameraDevice cameraDevice) {
       Timber.d("Closed camera, releasing");
-      mCameraDevice = null;
+      CameraHandler.this.cameraDevice = null;
     }
   };
 
   /**
-   * Begin a still image capture
+   * Begin a still image capture.
    */
   public void takePicture() {
-    if (mCameraDevice == null) {
+    if (cameraDevice == null) {
       Timber.w("Cannot capture image. Camera not initialized.");
       return;
     }
 
     // Here, we create a CameraCaptureSession for capturing still images.
     try {
-      mCameraDevice.createCaptureSession(
-          Collections.singletonList(mImageReader.getSurface()),
-          mSessionCallback,
+      cameraDevice.createCaptureSession(
+          Collections.singletonList(imageReader.getSurface()),
+          sessionCallback,
           null);
     } catch (CameraAccessException e) {
       Timber.d(e, "access exception while preparing pic");
@@ -144,18 +145,18 @@ public class CameraHandler {
   }
 
   /**
-   * Callback handling session state changes
+   * Callback handling session state changes.
    */
-  private CameraCaptureSession.StateCallback mSessionCallback =
+  private CameraCaptureSession.StateCallback sessionCallback =
       new CameraCaptureSession.StateCallback() {
         @Override
         public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
           // The camera is already closed
-          if (mCameraDevice == null) {
+          if (cameraDevice == null) {
             return;
           }
           // When the session is ready, we start capture.
-          mCaptureSession = cameraCaptureSession;
+          captureSession = cameraCaptureSession;
           triggerImageCapture();
         }
 
@@ -166,26 +167,26 @@ public class CameraHandler {
       };
 
   /**
-   * Execute a new capture request within the active session
+   * Execute a new capture request within the active session.
    */
   private void triggerImageCapture() {
     try {
       final CaptureRequest.Builder captureBuilder =
-          mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-      captureBuilder.addTarget(mImageReader.getSurface());
+          cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+      captureBuilder.addTarget(imageReader.getSurface());
       captureBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
       captureBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
       Timber.d("Capture request created.");
-      mCaptureSession.capture(captureBuilder.build(), mCaptureCallback, null);
+      captureSession.capture(captureBuilder.build(), captureCallback, null);
     } catch (CameraAccessException cae) {
       Timber.d("camera capture exception");
     }
   }
 
   /**
-   * Callback handling capture session events
+   * Callback handling capture session events.
    */
-  private final CameraCaptureSession.CaptureCallback mCaptureCallback =
+  private final CameraCaptureSession.CaptureCallback captureCallback =
       new CameraCaptureSession.CaptureCallback() {
         @Override
         public void onCaptureProgressed(@NonNull CameraCaptureSession session,
@@ -199,29 +200,29 @@ public class CameraHandler {
                                        @NonNull CaptureRequest request,
                                        @NonNull TotalCaptureResult result) {
           session.close();
-          mCaptureSession = null;
+          captureSession = null;
           Timber.d("CaptureSession closed");
         }
       };
 
   private void closeCaptureSession() {
-    if (mCaptureSession != null) {
+    if (captureSession != null) {
       try {
-        mCaptureSession.close();
+        captureSession.close();
       } catch (Exception ex) {
         Timber.e("Could not close capture session", ex);
       }
-      mCaptureSession = null;
+      captureSession = null;
     }
   }
 
   /**
-   * Close the camera resources
+   * Close the camera resources.
    */
   public void shutDown() {
     closeCaptureSession();
-    if (mCameraDevice != null) {
-      mCameraDevice.close();
+    if (cameraDevice != null) {
+      cameraDevice.close();
     }
   }
 
@@ -231,7 +232,7 @@ public class CameraHandler {
    * hardware.
    */
   public static void dumpFormatInfo(Context context) {
-    CameraManager manager = (CameraManager) context.getSystemService(CAMERA_SERVICE);
+    CameraManager manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
     String[] camIds = {};
     try {
       camIds = manager.getCameraIdList();

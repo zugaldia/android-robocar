@@ -18,6 +18,9 @@ public class ImagePreprocessor {
   private byte[][] cachedYuvBytes;
   private int[] cachedRgbBytes;
 
+  /**
+   * Constructor.
+   */
   public ImagePreprocessor(int inputImageWidth, int inputImageHeight, int outputSize) {
     this.cachedRgbBytes = new int[inputImageWidth * inputImageHeight];
     this.cachedYuvBytes = new byte[3][];
@@ -25,7 +28,9 @@ public class ImagePreprocessor {
     this.rgbFrameBitmap = Bitmap.createBitmap(inputImageWidth, inputImageHeight, Config.ARGB_8888);
   }
 
-  // No cropping or rescaling
+  /**
+   * No cropping or rescaling.
+   */
   public Bitmap convertImage(final Image image) {
     if (image == null) {
       return null;
@@ -45,6 +50,9 @@ public class ImagePreprocessor {
     return rgbFrameBitmap;
   }
 
+  /**
+   * Crop and rescale for TensorFlow.
+   */
   public Bitmap preprocessImage(final Image image) {
     if (image == null) {
       return null;
