@@ -15,19 +15,14 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.zugaldia.robocar.mobile.R;
-import com.zugaldia.robocar.software.webserver.models.RobocarSpeed;
+import com.zugaldia.robocar.mobile.client.RestRobocarClient;
+import com.zugaldia.robocar.mobile.client.RobocarClient;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnTouch;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
+import timber.log.Timber;
 
 public class ControllerActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -330,61 +325,18 @@ public class ControllerActivity extends AppCompatActivity implements NavigationV
         return sign * speed;
     }
 
-    private Retrofit retrofit(String baseUrl) {
-        Gson gson = new GsonBuilder()
-                .setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
-                .create();
-
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(baseUrl)
-                .addConverterFactory(GsonConverterFactory.create(gson))
-                .build();
-        return retrofit;
-    }
-
-    private RobocarService getApiService() {
-        RobocarService apiService;
-        try {
-            String baseUrl = webserviceUrlTextView.getText().toString();
-
-            if (baseUrl == null || baseUrl.isEmpty()) {
-                Toast.makeText(this, "Please enter robocar service url", Toast.LENGTH_SHORT).show();
-                return null;
-            }
-            baseUrl = "http://" + baseUrl;
-            apiService = retrofit(baseUrl).create(RobocarService.class);
-        } catch (Exception e) {
-            Toast.makeText(this, "Error connecting to robocar: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            return null;
-        }
-        return apiService;
-    }
-
     private void setSpeed(Integer left, Integer right) {
         if(left!=null)
             this.leftSpeedTextView.setText(""+left);
         if(right!=null)
             this.rightSpeedTextView.setText(""+right);
-
-        RobocarSpeed speed = new RobocarSpeed();
-        speed.setLeft(left);
-        speed.setRight(right);
-
-        RobocarService apiService = getApiService();
-        if (apiService == null)
-            return;
-
-        Call<RobocarSpeed> call = apiService.changeSpeed(speed);
-        call.enqueue(new Callback<RobocarSpeed>() {
-            @Override
-            public void onResponse(Call<RobocarSpeed> call, Response<RobocarSpeed> response) {
-
-            }
-
-            @Override
-            public void onFailure(Call<RobocarSpeed> call, Throwable t) {
-            }
-        });
+        try {
+            RobocarClient service= new RestRobocarClient("http://"+this.webserviceUrlTextView.getText());
+            service.changeSpeed(left, right);
+        }catch(Exception e) {
+            Toast.makeText(this, "Unable to communicate with Robocar: "+e.getMessage(), Toast.LENGTH_SHORT).show();
+            Timber.d(e.getMessage());
+        }
     }
 
     @Override
