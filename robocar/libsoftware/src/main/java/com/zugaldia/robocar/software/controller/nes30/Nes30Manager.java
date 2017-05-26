@@ -32,10 +32,10 @@ public class Nes30Manager implements KeyEvent.Callback {
   public static final int BUTTON_SELECT_CODE = KeyEvent.KEYCODE_BUTTON_11;
   public static final int BUTTON_START_CODE = KeyEvent.KEYCODE_BUTTON_12;
 
-  public static final int BUTTON_A_CODE = KeyEvent.KEYCODE_BUTTON_1;
-  public static final int BUTTON_B_CODE = KeyEvent.KEYCODE_BUTTON_2;
-  public static final int BUTTON_X_CODE = KeyEvent.KEYCODE_BUTTON_4;
-  public static final int BUTTON_Y_CODE = KeyEvent.KEYCODE_BUTTON_5;
+  public static final int BUTTON_A_CODE = KeyEvent.KEYCODE_BUTTON_A;
+  public static final int BUTTON_B_CODE = KeyEvent.KEYCODE_BUTTON_B;
+  public static final int BUTTON_X_CODE = KeyEvent.KEYCODE_BUTTON_X;
+  public static final int BUTTON_Y_CODE = KeyEvent.KEYCODE_BUTTON_Y;
 
   public static final int BUTTON_L_CODE = KeyEvent.KEYCODE_BUTTON_7;
   public static final int BUTTON_R_CODE = KeyEvent.KEYCODE_BUTTON_8;
