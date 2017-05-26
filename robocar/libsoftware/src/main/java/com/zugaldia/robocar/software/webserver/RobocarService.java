@@ -2,6 +2,7 @@ package com.zugaldia.robocar.software.webserver;
 
 import com.zugaldia.robocar.software.webserver.models.RobocarMove;
 import com.zugaldia.robocar.software.webserver.models.RobocarResponse;
+import com.zugaldia.robocar.software.webserver.models.RobocarSpeed;
 import com.zugaldia.robocar.software.webserver.models.RobocarStatus;
 
 import retrofit2.Call;
@@ -20,5 +21,8 @@ public interface RobocarService {
 
   @POST(LocalWebServer.ENDPOINT_POST_MOVE)
   Call<RobocarResponse> postMove(@Body RobocarMove move);
+
+  @POST(LocalWebServer.ENDPOINT_POST_SPEED)
+  Call<RobocarResponse> postSpeed(@Body RobocarSpeed speed);
 
 }

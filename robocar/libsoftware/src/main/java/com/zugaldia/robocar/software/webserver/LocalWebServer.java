@@ -7,15 +7,15 @@ import android.text.format.Formatter;
 import com.google.gson.GsonBuilder;
 import com.zugaldia.robocar.software.webserver.models.RobocarMove;
 import com.zugaldia.robocar.software.webserver.models.RobocarResponse;
+import com.zugaldia.robocar.software.webserver.models.RobocarSpeed;
+
+import fi.iki.elonen.NanoHTTPD;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import fi.iki.elonen.NanoHTTPD;
 import timber.log.Timber;
-
-import static android.content.Context.WIFI_SERVICE;
 
 /**
  * Created by antonio on 4/1/17.
@@ -28,6 +28,7 @@ public class LocalWebServer extends NanoHTTPD {
   public static final String ENDPOINT_ROOT = "/";
   public static final String ENDPOINT_GET_STATUS = "api/status";
   public static final String ENDPOINT_POST_MOVE = "api/move";
+  public static final String ENDPOINT_POST_SPEED = "api/speed";
 
   private RequestListener requestListener;
 
@@ -52,21 +53,33 @@ public class LocalWebServer extends NanoHTTPD {
           case ENDPOINT_ROOT + ENDPOINT_GET_STATUS:
             result = requestListener.onStatus();
             break;
+          default:
+            // No action.
+            break;
         }
         break;
       case POST:
         switch (session.getUri()) {
           case ENDPOINT_ROOT + ENDPOINT_POST_MOVE:
-            RobocarMove move = (RobocarMove) readPOSTAsObject(session, RobocarMove.class);
+            RobocarMove move = (RobocarMove) readPostAsObject(session, RobocarMove.class);
             result = requestListener.onMove(move);
             break;
+          case ENDPOINT_ROOT + ENDPOINT_POST_SPEED:
+            RobocarSpeed speed = (RobocarSpeed)readPostAsObject(session, RobocarSpeed.class);
+            result = requestListener.onSpeed(speed);
+          default:
+            // No action.
+            break;
         }
+        break;
+      default:
+        // No action.
         break;
     }
 
     if (result == null) {
       result = new RobocarResponse(404, String.format(
-        "Unknown %s endpoint: %s", session.getMethod(), session.getUri()));
+          "Unknown %s endpoint: %s", session.getMethod(), session.getUri()));
     }
 
     return buildResponse(result);
@@ -74,14 +87,17 @@ public class LocalWebServer extends NanoHTTPD {
 
   private Response buildResponse(Object object) {
     return newFixedLengthResponse(Response.Status.OK, APPLICATION_JSON,
-      new GsonBuilder().create().toJson(object));
+        new GsonBuilder().create().toJson(object));
   }
 
   public static String getIpAddress(Context context) {
-    WifiManager wm = (WifiManager) context.getSystemService(WIFI_SERVICE);
+    WifiManager wm = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
     return Formatter.formatIpAddress(wm.getConnectionInfo().getIpAddress());
   }
 
+  /**
+   * Print out session log information.
+   */
   public static void logSession(IHTTPSession session) {
     // E.g.: http://localhost:8080/foo.json?echo=true&foo=bar
     Timber.d("getMethod: %s", session.getMethod()); // GET
@@ -95,7 +111,7 @@ public class LocalWebServer extends NanoHTTPD {
     Timber.d("Parameters present: %b", session.getParameters() != null);
   }
 
-  private static Object readPOSTAsObject(IHTTPSession session, Class clazz) {
+  private static Object readPostAsObject(IHTTPSession session, Class clazz) {
     Map<String, String> files = new HashMap<>();
 
     try {

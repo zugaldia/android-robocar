@@ -14,27 +14,30 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
-import com.zugaldia.robocar.software.controller.nes30.NES30Manager;
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
+import com.zugaldia.robocar.software.controller.nes30.Nes30Manager;
 import com.zugaldia.robocar.software.webserver.LocalWebServer;
 import com.zugaldia.robocar.software.webserver.RequestListener;
 import com.zugaldia.robocar.software.webserver.RobocarClient;
 import com.zugaldia.robocar.software.webserver.models.RobocarMove;
 import com.zugaldia.robocar.software.webserver.models.RobocarResponse;
+import com.zugaldia.robocar.software.webserver.models.RobocarSpeed;
 import com.zugaldia.robocar.software.webserver.models.RobocarStatus;
+
+import fi.iki.elonen.NanoHTTPD;
 
 import java.io.IOException;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
-import fi.iki.elonen.NanoHTTPD;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity
-  implements NavigationView.OnNavigationItemSelectedListener, RequestListener {
+    implements NavigationView.OnNavigationItemSelectedListener, RequestListener {
 
   @BindView(R.id.button_left)
   Button buttonLeft;
@@ -75,13 +78,13 @@ public class MainActivity extends AppCompatActivity
       @Override
       public void onClick(View view) {
         Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-          .setAction("Action", null).show();
+            .setAction("Action", null).show();
       }
     });
 
     DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
     ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-      this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
     drawer.setDrawerListener(toggle);
     toggle.syncState();
 
@@ -92,7 +95,15 @@ public class MainActivity extends AppCompatActivity
     setupWebServer();
   }
 
-  @OnClick( {R.id.button_left, R.id.button_right, R.id.button_up, R.id.button_down, R.id.button_l, R.id.button_r, R.id.button_select, R.id.button_start, R.id.button_y, R.id.button_a, R.id.button_x, R.id.button_b})
+  /**
+   * React to UI button clicks.
+   */
+  @OnClick({R.id.button_left, R.id.button_right,
+      R.id.button_up, R.id.button_down,
+      R.id.button_l, R.id.button_r,
+      R.id.button_select, R.id.button_start,
+      R.id.button_y, R.id.button_a,
+      R.id.button_x, R.id.button_b})
   public void onButtonClick(Button button) {
     RobocarClient client = new RobocarClient();
 
@@ -112,40 +123,43 @@ public class MainActivity extends AppCompatActivity
 
     switch (button.getId()) {
       case R.id.button_left:
-        client.postMove(new RobocarMove(NES30Manager.BUTTON_LEFT_CODE), callback);
+        client.postMove(new RobocarMove(Nes30Manager.BUTTON_LEFT_CODE), callback);
         break;
       case R.id.button_right:
-        client.postMove(new RobocarMove(NES30Manager.BUTTON_RIGHT_CODE), callback);
+        client.postMove(new RobocarMove(Nes30Manager.BUTTON_RIGHT_CODE), callback);
         break;
       case R.id.button_up:
-        client.postMove(new RobocarMove(NES30Manager.BUTTON_UP_CODE), callback);
+        client.postMove(new RobocarMove(Nes30Manager.BUTTON_UP_CODE), callback);
         break;
       case R.id.button_down:
-        client.postMove(new RobocarMove(NES30Manager.BUTTON_DOWN_CODE), callback);
+        client.postMove(new RobocarMove(Nes30Manager.BUTTON_DOWN_CODE), callback);
         break;
       case R.id.button_l:
-        client.postMove(new RobocarMove(NES30Manager.BUTTON_L_CODE), callback);
+        client.postMove(new RobocarMove(Nes30Manager.BUTTON_L_CODE), callback);
         break;
       case R.id.button_r:
-        client.postMove(new RobocarMove(NES30Manager.BUTTON_R_CODE), callback);
+        client.postMove(new RobocarMove(Nes30Manager.BUTTON_R_CODE), callback);
         break;
       case R.id.button_select:
-        client.postMove(new RobocarMove(NES30Manager.BUTTON_SELECT_CODE), callback);
+        client.postMove(new RobocarMove(Nes30Manager.BUTTON_SELECT_CODE), callback);
         break;
       case R.id.button_start:
-        client.postMove(new RobocarMove(NES30Manager.BUTTON_START_CODE), callback);
+        client.postMove(new RobocarMove(Nes30Manager.BUTTON_START_CODE), callback);
         break;
       case R.id.button_y:
-        client.postMove(new RobocarMove(NES30Manager.BUTTON_Y_CODE), callback);
+        client.postMove(new RobocarMove(Nes30Manager.BUTTON_Y_CODE), callback);
         break;
       case R.id.button_a:
-        client.postMove(new RobocarMove(NES30Manager.BUTTON_A_CODE), callback);
+        client.postMove(new RobocarMove(Nes30Manager.BUTTON_A_CODE), callback);
         break;
       case R.id.button_x:
-        client.postMove(new RobocarMove(NES30Manager.BUTTON_X_CODE), callback);
+        client.postMove(new RobocarMove(Nes30Manager.BUTTON_X_CODE), callback);
         break;
       case R.id.button_b:
-        client.postMove(new RobocarMove(NES30Manager.BUTTON_B_CODE), callback);
+        client.postMove(new RobocarMove(Nes30Manager.BUTTON_B_CODE), callback);
+        break;
+      default:
+        // No action
         break;
     }
   }
@@ -200,17 +214,17 @@ public class MainActivity extends AppCompatActivity
     int id = item.getItemId();
 
     if (id == R.id.nav_camera) {
-      // Handle the camera action
+      // No action
     } else if (id == R.id.nav_gallery) {
-
+      // No action
     } else if (id == R.id.nav_slideshow) {
-
+      // No action
     } else if (id == R.id.nav_manage) {
-
+      // No action
     } else if (id == R.id.nav_share) {
-
+      // No action
     } else if (id == R.id.nav_send) {
-
+      // No action
     }
 
     DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -231,5 +245,11 @@ public class MainActivity extends AppCompatActivity
   @Override
   public RobocarResponse onMove(RobocarMove move) {
     return new RobocarResponse(200, String.format("Moved: %d", move.getKeyCode()));
+  }
+
+  @Override
+  public RobocarResponse onSpeed(RobocarSpeed speed) {
+    return new RobocarResponse(200, String.format(
+        "Speed change: %d/%d", speed.getLeft(), speed.getRight()));
   }
 }

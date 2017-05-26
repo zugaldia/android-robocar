@@ -1,7 +1,7 @@
 package com.zugaldia.robocar.app;
 
 /**
- * Use this class to customize your set up
+ * Use this class to customize your set up.
  */
 public class RobocarConstants {
 

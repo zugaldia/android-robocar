@@ -7,7 +7,7 @@ import android.os.Bundle;
 import timber.log.Timber;
 
 /**
- * Robocar application class
+ * Robocar application class.
  */
 public class RobocarApp extends Application {
   @Override
