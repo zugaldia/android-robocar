@@ -19,9 +19,8 @@ import com.zugaldia.robocar.software.webserver.models.RobocarResponse;
 import com.zugaldia.robocar.software.webserver.models.RobocarSpeed;
 import com.zugaldia.robocar.software.webserver.models.RobocarStatus;
 
-import java.io.IOException;
-
 import fi.iki.elonen.NanoHTTPD;
+import java.io.IOException;
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity
@@ -297,7 +296,8 @@ public class MainActivity extends AppCompatActivity
     if (speed == null) {
       return new RobocarResponse(400, "Bad Request");
     }
-    RobocarSpeedChanger speedChanger = new RobocarSpeedChanger(motorFrontLeft, motorFrontRight, motorBackLeft, motorBackRight);
+    RobocarSpeedChanger speedChanger = new RobocarSpeedChanger(
+        motorFrontLeft, motorFrontRight, motorBackLeft, motorBackRight);
     speedChanger.changeSpeed(speed);
     return new RobocarResponse(200, "OK");
   }

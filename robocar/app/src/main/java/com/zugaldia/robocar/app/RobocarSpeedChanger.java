@@ -20,10 +20,10 @@ class RobocarSpeedChanger {
   private AdafruitDcMotor motorBackRight;
 
   public RobocarSpeedChanger(
-    AdafruitDcMotor motorFrontLeft,
-    AdafruitDcMotor motorFrontRight,
-    AdafruitDcMotor motorBackLeft,
-    AdafruitDcMotor motorBackRight) {
+      AdafruitDcMotor motorFrontLeft,
+      AdafruitDcMotor motorFrontRight,
+      AdafruitDcMotor motorBackLeft,
+      AdafruitDcMotor motorBackRight) {
 
     this.motorFrontLeft = motorFrontLeft;
     this.motorFrontRight = motorFrontRight;
