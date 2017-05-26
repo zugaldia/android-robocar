@@ -1,4 +1,4 @@
-package com.zugaldia.robocar.mobile;
+package com.zugaldia.robocar.mobile.debug;
 
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -18,6 +18,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
+import com.zugaldia.robocar.mobile.R;
 import com.zugaldia.robocar.software.controller.nes30.Nes30Manager;
 import com.zugaldia.robocar.software.webserver.LocalWebServer;
 import com.zugaldia.robocar.software.webserver.RequestListener;
@@ -36,7 +37,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import timber.log.Timber;
 
-public class MainActivity extends AppCompatActivity
+public class DebugActivity extends AppCompatActivity
     implements NavigationView.OnNavigationItemSelectedListener, RequestListener {
 
   @BindView(R.id.button_left)
@@ -67,7 +68,7 @@ public class MainActivity extends AppCompatActivity
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
+    setContentView(R.layout.activity_debug);
     ButterKnife.bind(this);
 
     Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -213,17 +214,9 @@ public class MainActivity extends AppCompatActivity
     // Handle navigation view item clicks here.
     int id = item.getItemId();
 
-    if (id == R.id.nav_camera) {
+    if (id == R.id.controller_activity) {
       // No action
-    } else if (id == R.id.nav_gallery) {
-      // No action
-    } else if (id == R.id.nav_slideshow) {
-      // No action
-    } else if (id == R.id.nav_manage) {
-      // No action
-    } else if (id == R.id.nav_share) {
-      // No action
-    } else if (id == R.id.nav_send) {
+    } else if (id == R.id.debug_activity) {
       // No action
     }
 
