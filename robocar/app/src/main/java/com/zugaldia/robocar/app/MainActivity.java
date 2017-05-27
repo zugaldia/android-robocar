@@ -78,10 +78,10 @@ public class MainActivity extends AppCompatActivity
   @Override
   public int[] getSpeeds() {
     return new int[] {
-        motorHat.getMotor(0).getLastSpeed(),
         motorHat.getMotor(1).getLastSpeed(),
         motorHat.getMotor(2).getLastSpeed(),
-        motorHat.getMotor(3).getLastSpeed()};
+        motorHat.getMotor(3).getLastSpeed(),
+        motorHat.getMotor(4).getLastSpeed()};
   }
 
   private void setMotorSpeedsBasedOnButtonsPressed() {
