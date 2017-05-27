@@ -72,7 +72,7 @@ public class CameraHandler {
       return;
     }
     String id = camIds[0];
-    Timber.d("Using camera id: %d.", id);
+    Timber.d("Using camera id: %s.", id);
 
     // Initialize the image processor
     imageReader = ImageReader.newInstance(IMAGE_WIDTH, IMAGE_HEIGHT,
