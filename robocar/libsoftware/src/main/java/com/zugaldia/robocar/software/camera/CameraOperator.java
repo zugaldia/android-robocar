@@ -13,6 +13,8 @@ import com.zugaldia.robocar.software.camera.utils.ImagePreprocessor;
 import com.zugaldia.robocar.software.camera.utils.ImageUtils;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -25,6 +27,8 @@ import timber.log.Timber;
 public class CameraOperator implements ImageReader.OnImageAvailableListener {
 
   private static final int INPUT_SIZE = 224;
+
+  private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.US);
 
   private Context context;
   private Handler backgroundHandler;
@@ -66,8 +70,12 @@ public class CameraOperator implements ImageReader.OnImageAvailableListener {
   };
 
   public void takePicture() {
-    currentFilename = "robocar.jpg";
+    currentFilename = String.format("robocar-%s.jpg", getTimestamp());
     cameraHandler.takePicture();
+  }
+
+  private String getTimestamp() {
+    return dateFormat.format(new Date());
   }
 
   /**
