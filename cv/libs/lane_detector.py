@@ -486,7 +486,7 @@ class LaneDetector(object):
         leftx_int = left_fit[0] * 720 ** 2 + left_fit[1] * 720 + left_fit[2]
         rightx_int = right_fit[0] * 720 ** 2 + right_fit[1] * 720 + right_fit[2]
         deviation = (640 - ((rightx_int + leftx_int) / 2)) * xm_per_pix
-        return deviation + (10/100)
+        return deviation
 
     @staticmethod
     def reproject(undist, warped, ploty, left_fitx, right_fitx):
