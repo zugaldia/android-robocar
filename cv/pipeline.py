@@ -53,10 +53,7 @@ def process_image(image):
     perspective = LaneDetector.perspective(undistorted_image)
     binary_warped = LaneDetector.combine_threshold_color(perspective)
     lane_detector.sliding_window_search(undistorted_image, binary_warped)
-    if lane_detector.reprojected is not None:
-        return lane_detector.reprojected
-    else:
-        return image
+    return lane_detector.reprojected
 
 
 #

@@ -251,16 +251,34 @@ class LaneDetector(object):
     def sliding_window_search(self, undistorted_image, binary_warped):
         try:
             if self.left_fit is not None and self.right_fit is not None:
-                self.left_fit, self.right_fit, ploty, left_fitx, right_fitx = self.sliding_window_continue(
+                self.left_fit, self.right_fit, ploty, left_fitx, right_fitx, leftx, rightx = self.sliding_window_continue(
                     binary_warped, self.left_fit, self.right_fit)
             else:
-                self.left_fit, self.right_fit, ploty, left_fitx, right_fitx = self.sliding_window_start(
-                    undistorted_image,
-                    binary_warped)
+                self.left_fit, self.right_fit, ploty, left_fitx, right_fitx, leftx, rightx = self.sliding_window_start(
+                    undistorted_image, binary_warped)
             self.reprojected = self.reproject(undistorted_image, binary_warped, ploty, left_fitx, right_fitx)
         except Exception as e:
             print("Failed: %s" % e)
-            self.reprojected = None
+            self.reprojected = undistorted_image
+
+        try:
+            y_eval = np.max(ploty)
+            left_curverad, right_curverad = self.get_curvature(ploty, left_fitx, right_fitx, y_eval)
+            left_text = 'straight' if left_curverad > 2000 else '%.1fm' % left_curverad
+            right_text = 'straight' if right_curverad > 2000 else '%.1fm' % right_curverad
+            curvature_text = 'radius of curvature: %s (left), %s (right)' % (left_text, right_text)
+            deviation = self.get_deviation(self.left_fit, self.right_fit)
+            deviation_side = 'left' if deviation > 0 else 'right'
+        except Exception as e:
+            curvature_text = 'radius of curvature: %.1fm (left), %.1fm (right)' % (0.0, 0.0)
+            deviation = 0.0
+            deviation_side = ''
+            print("Failed: %s" % e)
+
+        cv2.putText(self.reprojected, curvature_text,
+                    org=(50, 80), fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1, color=(255, 255, 255))
+        cv2.putText(self.reprojected, 'deviation from center: %.1fcm (to the %s)' % (abs(deviation) * 100, deviation_side),
+                    org=(50, 100), fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1, color=(255, 255, 255))
 
     @staticmethod
     def sliding_window_start(undistorted_image, binary_warped):
@@ -344,7 +362,7 @@ class LaneDetector(object):
         ploty, left_fitx, right_fitx = LaneDetector.visualize_window(undistorted_image, binary_warped, out_img,
                                                                      nonzerox, nonzeroy, left_lane_inds,
                                                                      right_lane_inds, left_fit, right_fit)
-        return left_fit, right_fit, ploty, left_fitx, right_fitx
+        return left_fit, right_fit, ploty, left_fitx, right_fitx, leftx, rightx
 
     @staticmethod
     def visualize_window(undistorted_image, binary_warped, out_img, nonzerox, nonzeroy, left_lane_inds, right_lane_inds,
@@ -400,7 +418,7 @@ class LaneDetector(object):
                                                                               left_fit, right_fit, left_lane_inds,
                                                                               right_lane_inds, margin)
 
-        return left_fit, right_fit, ploty, left_fitx, right_fitx
+        return left_fit, right_fit, ploty, left_fitx, right_fitx, leftx, rightx
 
     @staticmethod
     def visualize_window_continue(binary_warped, nonzerox, nonzeroy, left_fit, right_fit, left_lane_inds,
@@ -458,8 +476,17 @@ class LaneDetector(object):
                                      1]) ** 2) ** 1.5) / np.absolute(
             2 * right_fit_cr[0])
         # Now our radius of curvature is in meters
-        print(left_curverad, 'm', right_curverad, 'm')
         # Example values: 632.1 m    626.2 m
+        return left_curverad, right_curverad
+
+    @staticmethod
+    def get_deviation(left_fit, right_fit):
+        # Input images are 1280x720
+        xm_per_pix = 3.7 / 700  # meters per pixel in x dimension
+        leftx_int = left_fit[0] * 720 ** 2 + left_fit[1] * 720 + left_fit[2]
+        rightx_int = right_fit[0] * 720 ** 2 + right_fit[1] * 720 + right_fit[2]
+        deviation = (640 - ((rightx_int + leftx_int) / 2)) * xm_per_pix
+        return deviation + (10/100)
 
     @staticmethod
     def reproject(undist, warped, ploty, left_fitx, right_fitx):
