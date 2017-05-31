@@ -26,3 +26,9 @@ checkstyle:
 build:
 	cd robocar; ./gradlew assembleDebug
 	cd mobile; ./gradlew assembleDebug
+
+download:
+	cd photos; adb shell ls /storage/emulated/0/Pictures/robocar/* | tr '\r' ' ' | xargs -n1 adb pull
+
+remove:
+	adb shell rm /storage/emulated/0/Pictures/robocar/*
