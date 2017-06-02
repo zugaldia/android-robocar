@@ -32,3 +32,11 @@ download:
 
 remove:
 	adb shell rm /storage/emulated/0/Pictures/robocar/*
+
+website:
+	# Site will be here: http://127.0.0.1:4000/
+	cd docs; bundle exec jekyll serve
+
+website-deps:
+	sudo gem install bundler
+	cd docs; sudo bundle install
