@@ -1,8 +1,7 @@
 # Check PNG
 
-import matplotlib.pyplot as plt
-from scipy.ndimage.measurements import label
 from moviepy.editor import VideoFileClip
+from scipy.ndimage.measurements import label
 
 from libs.lesson_functions import *
 
@@ -13,13 +12,12 @@ except:
     print('Training data not found, training.')
     dist_pickle = do_training()
 
-bboxes_before = None
+
+last_bboxes = []
 
 
 def process_image(image):
-    global dist_pickle, bboxes_before
-
-    # image = mpimg.imread('input_images/bbox-example-image.jpg')
+    global dist_pickle, last_bboxes
 
     ystart = 400
     ystop = 656
@@ -35,36 +33,14 @@ def process_image(image):
     bboxes = find_cars(image, ystart, ystop, scale, svc, X_scaler, orient,
                        pix_per_cell, cell_per_block, spatial_size, hist_bins)
 
-    if len(bboxes) > 0:
-        bboxes_before = bboxes
-    elif bboxes_before is not None:
-        bboxes = bboxes_before
-
-    # Add heat to each box in box list
     heat = np.zeros_like(image[:, :, 0]).astype(np.float)
-    heat = add_heat(heat, bboxes)
-
-    # Apply threshold to help remove false positives
-    heat = apply_threshold(heat, 1)
-
-    # Visualize the heatmap when displaying
+    last_bboxes.append(bboxes)
+    last_bboxes = last_bboxes[-6:]
+    heat = add_heat(heat, [bbox for bboxes in last_bboxes for bbox in bboxes])
+    heat = apply_threshold(heat, 4)
     heatmap = np.clip(heat, 0, 255)
-
-    # Find final boxes from heatmap using label function
     labels = label(heatmap)
-    draw_img = draw_labeled_bboxes(image, labels)
-
-    # fig = plt.figure()
-    # plt.subplot(121)
-    # plt.imshow(draw_img)
-    # plt.title('Car Positions')
-    # plt.subplot(122)
-    # plt.imshow(heatmap, cmap='hot')
-    # plt.title('Heat Map')
-    # fig.tight_layout()
-    # plt.savefig('output_images/test-heat.jpg')
-    # plt.close()
-
+    draw_img = draw_labeled_bboxes(np.copy(image), labels)
     return draw_img
 
 
