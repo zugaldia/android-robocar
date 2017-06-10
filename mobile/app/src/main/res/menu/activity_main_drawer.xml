@@ -3,13 +3,21 @@
 
     <group android:checkableBehavior="single">
         <item
-            android:id="@+id/controller_activity"
+            android:id="@+id/game_controller_activity"
             android:icon="@drawable/ic_menu_send"
-            android:title="Controller"/>
+            android:title="Game Controller"/>
         <item
-            android:id="@+id/debug_activity"
-            android:icon="@drawable/ic_menu_gallery"
-            android:title="Test"/>
+            android:id="@+id/tilt_controller_activity"
+            android:icon="@drawable/ic_menu_send"
+            android:title="Tilt Controller"/>
+        <item
+            android:id="@+id/debug_controller_activity"
+            android:icon="@drawable/ic_menu_send"
+            android:title="Debug Controller"/>
+        <item
+            android:id="@+id/settings_activity"
+            android:icon="@drawable/ic_menu_send"
+            android:title="Settings"/>
     </group>
 
 </menu>

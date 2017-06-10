@@ -16,7 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.zugaldia.robocar.mobile.R;
-import com.zugaldia.robocar.mobile.client.RestRobocarClient;
+import com.zugaldia.robocar.mobile.client.RobocarRestClient;
 import com.zugaldia.robocar.mobile.client.RobocarClient;
 
 import butterknife.BindView;
@@ -24,7 +24,7 @@ import butterknife.ButterKnife;
 import butterknife.OnTouch;
 import timber.log.Timber;
 
-public class ControllerActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class GameControllerActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     @BindView(R.id.drawer_layout)
     DrawerLayout drawer;
@@ -331,8 +331,8 @@ public class ControllerActivity extends AppCompatActivity implements NavigationV
         if(right!=null)
             this.rightSpeedTextView.setText(""+right);
         try {
-            RobocarClient service= new RestRobocarClient("http://"+this.webserviceUrlTextView.getText());
-            service.changeSpeed(left, right);
+            RobocarClient service= new RobocarRestClient("http://"+this.webserviceUrlTextView.getText());
+            service.setSpeed(left, right);
         }catch(Exception e) {
             Toast.makeText(this, "Unable to communicate with Robocar: "+e.getMessage(), Toast.LENGTH_SHORT).show();
             Timber.d(e.getMessage());
@@ -361,16 +361,15 @@ public class ControllerActivity extends AppCompatActivity implements NavigationV
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
-        int id = item.getItemId();
-
-        if (id == R.id.controller_activity) {
-            // No action
-        } else if (id == R.id.debug_activity) {
-            // No action
-        }
 
         drawer.closeDrawer(GravityCompat.START);
+
+        int id = item.getItemId();
+
+        new IntentRouter(this)
+                .navigateFrom(R.id.game_controller_activity)
+                .to(id);
+
         return true;
     }
 

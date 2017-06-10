@@ -1,5 +1,6 @@
 package com.zugaldia.robocar.mobile.debug;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -19,6 +20,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 
 import com.zugaldia.robocar.mobile.R;
+import com.zugaldia.robocar.mobile.controller.IntentRouter;
 import com.zugaldia.robocar.software.controller.nes30.Nes30Manager;
 import com.zugaldia.robocar.software.webserver.LocalWebServer;
 import com.zugaldia.robocar.software.webserver.RequestListener;
@@ -64,6 +66,8 @@ public class DebugActivity extends AppCompatActivity
   Button buttonX;
   @BindView(R.id.button_b)
   Button buttonB;
+  @BindView(R.id.drawer_layout)
+  DrawerLayout drawer;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -83,17 +87,18 @@ public class DebugActivity extends AppCompatActivity
       }
     });
 
-    DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-    ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-        this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-    drawer.setDrawerListener(toggle);
-    toggle.syncState();
+    initNavigationDrawer();
 
     NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
     navigationView.setNavigationItemSelectedListener(this);
 
     // Local web server
     setupWebServer();
+  }
+
+  private void initNavigationDrawer() {
+    NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+    navigationView.setNavigationItemSelectedListener(this);
   }
 
   /**
@@ -211,17 +216,15 @@ public class DebugActivity extends AppCompatActivity
   @SuppressWarnings("StatementWithEmptyBody")
   @Override
   public boolean onNavigationItemSelected(MenuItem item) {
-    // Handle navigation view item clicks here.
+
+    drawer.closeDrawer(GravityCompat.START);
+
     int id = item.getItemId();
 
-    if (id == R.id.controller_activity) {
-      // No action
-    } else if (id == R.id.debug_activity) {
-      // No action
-    }
+   new IntentRouter(this)
+           .navigateFrom(R.id.debug_controller_activity)
+           .to(id);
 
-    DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-    drawer.closeDrawer(GravityCompat.START);
     return true;
   }
 

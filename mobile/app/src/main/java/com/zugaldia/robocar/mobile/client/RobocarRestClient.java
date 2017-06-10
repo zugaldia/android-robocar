@@ -2,6 +2,8 @@ package com.zugaldia.robocar.mobile.client;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.zugaldia.robocar.software.webserver.RobocarService;
+import com.zugaldia.robocar.software.webserver.models.RobocarResponse;
 import com.zugaldia.robocar.software.webserver.models.RobocarSpeed;
 
 import retrofit2.Call;
@@ -10,29 +12,29 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class RestRobocarClient implements RobocarClient {
+public class RobocarRestClient implements RobocarClient {
 
-    RetrofitRobocarClient mRetrofitRobocarClient;
+    RobocarService mRobocarService;
 
-    public RestRobocarClient(String baseUrl) {
-            mRetrofitRobocarClient = retrofit(baseUrl).create(RetrofitRobocarClient.class);
+    public RobocarRestClient(String baseUrl) {
+            mRobocarService = retrofit(baseUrl).create(RobocarService.class);
     }
 
     @Override
-    public void changeSpeed(Integer leftSpeed, Integer rightSpeed) {
+    public void setSpeed(Integer leftSpeed, Integer rightSpeed) {
 
         RobocarSpeed speed = new RobocarSpeed ();
         speed.setLeft(leftSpeed);
         speed.setRight(rightSpeed);
 
-        Call<RobocarSpeed> call = this.mRetrofitRobocarClient.changeSpeed(speed);
-        call.enqueue(new Callback<RobocarSpeed>() {
+        Call<RobocarResponse> call = this.mRobocarService.postSpeed(speed);
+        call.enqueue(new Callback<RobocarResponse>() {
             @Override
-            public void onResponse(Call<RobocarSpeed> call, Response<RobocarSpeed> response) {
+            public void onResponse(Call<RobocarResponse> call, Response<RobocarResponse> response) {
             }
 
             @Override
-            public void onFailure(Call<RobocarSpeed> call, Throwable t) {
+            public void onFailure(Call<RobocarResponse> call, Throwable t) {
             }
         });
     }
