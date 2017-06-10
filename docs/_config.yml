@@ -1,0 +1,6 @@
+# https://github.com/pages-themes/minimal
+theme: jekyll-theme-minimal
+title: Android Robocar
+description: Build your own small autonomous car with Android Things.
+show_downloads: false
+google_analytics: UA-265455-33
