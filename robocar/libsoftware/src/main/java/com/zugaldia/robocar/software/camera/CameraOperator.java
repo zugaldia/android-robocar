@@ -1,169 +1,334 @@
 package com.zugaldia.robocar.software.camera;
 
+import android.Manifest;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.media.Image;
+import android.content.pm.PackageManager;
+import android.graphics.ImageFormat;
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CameraMetadata;
+import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.ImageReader;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
-
-import com.zugaldia.robocar.software.camera.utils.CameraHandler;
-import com.zugaldia.robocar.software.camera.utils.ImagePreprocessor;
-import com.zugaldia.robocar.software.camera.utils.ImageUtils;
+import android.support.v4.app.ActivityCompat;
+import android.util.Size;
+import android.view.Surface;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
 import timber.log.Timber;
 
 /**
- * This is wrapper around CameraHandler, we're avoiding calling this class CameraManager
- * which is already taken by the Android system.
+ * This class uses the camera2 API to open a session, able to take multiple quick photos, and
+ * close the session once the training data has been collected. It uses the default camera, at
+ * the lowest resolution, using automatic settings (3A; do we need to lock focus?). Files are stored
+ * in external storage for easier access.
  */
-public class CameraOperator implements ImageReader.OnImageAvailableListener {
 
-  private static final int INPUT_SIZE = 224;
+public class CameraOperator implements
+    SessionCallback.SessionCallbackListener,
+    ImageReader.OnImageAvailableListener {
 
+  private static final int CAMERA_INDEX = 0;
+  private static final int IMAGE_WIDTH = 320;
+  private static final int IMAGE_HEIGHT = 240;
+  private static final int IMAGE_FORMAT = ImageFormat.JPEG;
+  private static final int MAX_IMAGES = 2;
+  private static final String ROBOCAR_FOLDER = "robocar";
   private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.US);
 
-  private Context context;
+  private CameraOperatorListener listener;
+  private SpeedOwner speedOwner;
+
+  private boolean inSession;
+  private File root;
+  private boolean autofocusSupported = false;
+
+  private DeviceCallback deviceCallback;
+  private SessionCallback sessionCallback;
+  private CaptureCallback captureCallback;
+
+  private HandlerThread handlerThread;
   private Handler backgroundHandler;
-  private File folder;
 
-  private ImagePreprocessor imagePreprocessor;
-  private CameraHandler cameraHandler;
+  private ImageReader imageReader;
+  private String sessionId;
+  private int sessionCount;
 
-  private String currentFilename = null;
+  public CameraOperator(Context context, CameraOperatorListener listener, SpeedOwner speedOwner) {
+    Timber.d("Building camera training object.");
+    this.listener = listener;
+    this.speedOwner = speedOwner;
 
-  private boolean inTraining = false;
-
-  /**
-   * Constructor.
-   */
-  public CameraOperator(Context context) {
-    this.context = context;
-    HandlerThread backgroundThread = new HandlerThread("BackgroundThread");
-    backgroundThread.start();
-    backgroundHandler = new Handler(backgroundThread.getLooper());
-    backgroundHandler.post(initializeOnBackground);
-    folder = getAlbumStorageDir("robocar");
+    try {
+      init(context);
+    } catch (CameraAccessException e) {
+      Timber.e(e, "Failed to initialize camera training.");
+    }
   }
 
-  private Runnable initializeOnBackground = new Runnable() {
-    @Override
-    public void run() {
-      imagePreprocessor = new ImagePreprocessor(
-          CameraHandler.IMAGE_WIDTH, CameraHandler.IMAGE_HEIGHT, INPUT_SIZE);
-      cameraHandler = CameraHandler.getInstance();
-      cameraHandler.initializeCamera(context, backgroundHandler, CameraOperator.this);
+  public boolean isInSession() {
+    return inSession;
+  }
 
-      // Debug
-      CameraHandler.dumpFormatInfo(context);
-      Timber.d("isExternalStorageWritable: %b", isExternalStorageWritable());
-      Timber.d("isExternalStorageReadable: %b", isExternalStorageReadable());
-      Timber.d("getAlbumStorageDir: %s", folder.getAbsolutePath());
+  public boolean isAutofocusSupported() {
+    return autofocusSupported;
+  }
+
+  private void init(Context context) throws CameraAccessException {
+    inSession = false;
+
+    if (!ImageSaver.isExternalStorageWritable()) {
+      Timber.e("Cannot save file, external storage is not writable.");
+      return;
     }
-  };
+
+    root = ImageSaver.getRoot(ROBOCAR_FOLDER);
+    if (root == null) {
+      Timber.e("Failed to create destination folder.");
+      return;
+    }
+
+    CameraManager manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
+    String[] cameras = manager.getCameraIdList();
+    if (cameras.length == 0) {
+      Timber.e("No cameras available.");
+      return;
+    }
+
+    Timber.d("Default camera selected (%s), %d cameras found.",
+        cameras[CAMERA_INDEX], cameras.length);
+
+    if (ActivityCompat.checkSelfPermission(
+        context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+      Timber.d("Camera permission not granted yet, restart your device.");
+      return;
+    }
+
+    // Debug and check for autofocus support
+    dumpFormatInfo(manager, cameras[CAMERA_INDEX]);
+
+    startBackgroundThread();
+    deviceCallback = new DeviceCallback();
+    manager.openCamera(cameras[CAMERA_INDEX], deviceCallback, backgroundHandler);
+  }
+
+  /**
+   * Starts a background thread and its {@link Handler}.
+   */
+  private void startBackgroundThread() {
+    handlerThread = new HandlerThread("CAMERA_BACKGROUND");
+    handlerThread.start();
+    backgroundHandler = new Handler(handlerThread.getLooper());
+  }
+
+  /**
+   * Stops the background thread and its {@link Handler}.
+   */
+  private void stopBackgroundThread() {
+    handlerThread.quitSafely();
+    try {
+      // Waits for this thread to die
+      handlerThread.join();
+      handlerThread = null;
+      backgroundHandler = null;
+    } catch (InterruptedException e) {
+      Timber.e(e, "Failed to stop background thread.");
+    }
+  }
+
+  public void startSession() {
+    Timber.d("Starting a session.");
+    if (inSession) {
+      Timber.d("Session already started, end it first.");
+      return;
+    }
+
+    CameraDevice cameraDevice = deviceCallback != null ? deviceCallback.getCameraDevice() : null;
+    if (cameraDevice == null) {
+      Timber.e("Cannot open a session because no camera device is opened.");
+      return;
+    }
+
+    imageReader = ImageReader.newInstance(IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_FORMAT, MAX_IMAGES);
+    imageReader.setOnImageAvailableListener(this, backgroundHandler);
+    List<Surface> outputs = Collections.singletonList(imageReader.getSurface());
+    sessionCallback = new SessionCallback(this);
+    try {
+      Timber.d("Creating a camera session.");
+      cameraDevice.createCaptureSession(outputs, sessionCallback, backgroundHandler);
+    } catch (CameraAccessException e) {
+      Timber.e(e, "Failed to start a camera session.");
+    }
+
+    sessionId = UUID.randomUUID().toString().replace("-", "");
+    sessionCount = 0;
+  }
 
   public void takePicture() {
-    currentFilename = String.format("robocar-%s.jpg", getTimestamp());
-    cameraHandler.takePicture();
-  }
-
-  private String getTimestamp() {
-    return dateFormat.format(new Date());
-  }
-
-  /**
-   * Starts a training session.
-   */
-  public void startTrainingSession(final SpeedOwner speedOwner) {
-    if (inTraining) {
+    Timber.d("Taking a picture.");
+    if (!inSession) {
+      Timber.d("Cannot take a picture because no session is started.");
       return;
     }
-    inTraining = true;
 
-    final String sessionId = UUID.randomUUID().toString().replace("-", "");
-    final int[] count = new int[] {0};
-    final long delayMillis = 1000;
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        int[] speeds = speedOwner.getSpeeds();
-        currentFilename = String.format(Locale.US,
-            "robocar-%s-%d-%d-%d-%d-%d.jpg", sessionId, count[0],
-            speeds[0], speeds[1], speeds[2], speeds[3]);
-        Timber.d("Capturing picture: %s", currentFilename);
-        cameraHandler.takePicture();
-        count[0]++;
-        backgroundHandler.postDelayed(this, delayMillis);
+    CameraDevice cameraDevice = deviceCallback != null ? deviceCallback.getCameraDevice() : null;
+    if (cameraDevice == null) {
+      Timber.e("Cannot open a capture request because no camera device is opened.");
+      return;
+    }
+
+    try {
+      CaptureRequest.Builder builder = cameraDevice.createCaptureRequest(
+          CameraDevice.TEMPLATE_STILL_CAPTURE);
+      builder.addTarget(imageReader.getSurface());
+      // The camera device's autoexposure routine is active, with no flash control
+      builder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+      // The camera device's auto-white balance routine is active
+      builder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
+      if (isAutofocusSupported()) {
+        // Basic automatic focus mode
+        builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
       }
-    };
-
-    backgroundHandler.postDelayed(runnable, delayMillis);
+      CaptureRequest captureRequest = builder.build();
+      captureCallback = new CaptureCallback();
+      sessionCallback.getSession().capture(captureRequest, captureCallback, backgroundHandler);
+    } catch (CameraAccessException e) {
+      Timber.e(e, "Failed to create a capture request.");
+    }
   }
 
-  /**
-   * Stops a training session.
-   */
-  public void stopTrainingSession() {
-    if (!inTraining) {
+  public void endSession() {
+    Timber.d("Ending a session.");
+    if (!inSession) {
+      Timber.d("Session not started, start it first.");
       return;
     }
 
-    inTraining = false;
-    backgroundHandler.removeCallbacksAndMessages(null);
+    captureCallback.closeSession();
+    sessionCallback.closeSession();
+    deviceCallback.closeDevice();
+    if (imageReader != null) {
+      imageReader.close();
+      imageReader = null;
+    }
+
+    stopBackgroundThread();
+    inSession = false;
   }
 
-  public void shutDown() {
-    cameraHandler.shutDown();
+  /**
+   * This method indicates the camera is ready to take picture requests.
+   */
+  @Override
+  public void onConfigured() {
+    Timber.d("Session configured.");
+    inSession = true;
+    listener.sessionStarted();
   }
 
+  /**
+   * This method indicates we got an image from the camera.
+   */
   @Override
   public void onImageAvailable(ImageReader reader) {
-    Timber.d("Image is ready.");
-    Image image = reader.acquireNextImage();
-    Bitmap bitmap = imagePreprocessor.convertImage(image);
-    ImageUtils.saveBitmap(bitmap, folder.getAbsolutePath(), currentFilename);
+    Timber.d("Image available.");
+    String timestamp = dateFormat.format(new Date());
+    int[] speeds = speedOwner.getSpeeds();
+    String speedState = String.format(Locale.US, "%d-%d-%d-%d",
+        speeds[0], speeds[1], speeds[2], speeds[3]);
+    String filename = String.format(Locale.US, "robocar-%s-%d-%s-%s.jpg",
+        sessionId, sessionCount++, timestamp, speedState);
+    backgroundHandler.post(new ImageSaver(reader.acquireNextImage(), root, filename));
   }
 
   /**
-   * Checks if external storage is available for read and write.
+   * Helpful debugging method:  Dump all supported camera formats to log.  You don't need to run
+   * this for normal operation, but it's very helpful when porting this code to different
+   * hardware.
    */
-  public boolean isExternalStorageWritable() {
-    String state = Environment.getExternalStorageState();
-    if (Environment.MEDIA_MOUNTED.equals(state)) {
-      return true;
-    }
-    return false;
-  }
+  private void dumpFormatInfo(CameraManager manager, String cameraId) {
+    try {
+      CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
 
-  /**
-   * Checks if external storage is available to at least.
-   */
-  public boolean isExternalStorageReadable() {
-    String state = Environment.getExternalStorageState();
-    if (Environment.MEDIA_MOUNTED.equals(state)
-        || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-      return true;
-    }
-    return false;
-  }
+      StreamConfigurationMap configs = characteristics.get(
+          CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+      for (int format : configs.getOutputFormats()) {
+        if (format == IMAGE_FORMAT) {
+          Timber.d("Getting sizes for format: %d.", format);
+          for (Size s : configs.getOutputSizes(format)) {
+            Timber.d("Supported size: %s", s.toString());
+            // It should include IMAGE_WIDTH x IMAGE_HEIGHT
+            if (s.getWidth() == IMAGE_WIDTH && s.getHeight() == IMAGE_HEIGHT) {
+              Timber.d("(currently selected ^^^)", s.toString());
+            }
+          }
+        }
+      }
 
-  /**
-   * Get the directory for the user's public pictures directory.
-   * This is /storage/emulated/0/Pictures/robocar
-   */
-  public File getAlbumStorageDir(String folder) {
-    File file = new File(Environment.getExternalStoragePublicDirectory(
-        Environment.DIRECTORY_PICTURES), folder);
-    if (!file.mkdirs()) {
-      Timber.e("mkdirs failed for: %s.", file.getAbsolutePath());
+      int[] effects = characteristics.get(CameraCharacteristics.CONTROL_AVAILABLE_EFFECTS);
+      for (int effect : effects) {
+        switch (effect) {
+          case CaptureRequest.CONTROL_EFFECT_MODE_OFF:
+            Timber.d("Supported effect: OFF.");
+            break;
+          case CaptureRequest.CONTROL_EFFECT_MODE_MONO:
+            Timber.d("Supported effect: MONO.");
+            break;
+          case CaptureRequest.CONTROL_EFFECT_MODE_NEGATIVE:
+            Timber.d("Supported effect: NEGATIVE.");
+            break;
+          case CaptureRequest.CONTROL_EFFECT_MODE_SOLARIZE:
+            Timber.d("Supported effect: SOLARIZE.");
+            break;
+          case CaptureRequest.CONTROL_EFFECT_MODE_SEPIA:
+            Timber.d("Supported effect: SEPIA.");
+            break;
+          case CaptureRequest.CONTROL_EFFECT_MODE_POSTERIZE:
+            Timber.d("Supported effect: POSTERIZE.");
+            break;
+          case CaptureRequest.CONTROL_EFFECT_MODE_WHITEBOARD:
+            Timber.d("Supported effect: WHITEBOARD.");
+            break;
+          case CaptureRequest.CONTROL_EFFECT_MODE_BLACKBOARD:
+            Timber.d("Supported effect: BLACKBOARD.");
+            break;
+          case CaptureRequest.CONTROL_EFFECT_MODE_AQUA:
+            Timber.d("Supported effect: AQUA.");
+            break;
+          default:
+            Timber.d("Unknown effect available: %d", effect);
+            break;
+        }
+      }
+
+      int[] modes = characteristics.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES);
+      for (int mode : modes) {
+        if (mode == CameraMetadata.CONTROL_AF_MODE_AUTO) {
+          autofocusSupported = true;
+          break;
+        }
+      }
+
+      if (isAutofocusSupported()) {
+        Timber.d("Autofocus is supported.");
+      } else {
+        Timber.d("Autofocus is NOT supported.");
+      }
+    } catch (CameraAccessException e) {
+      Timber.e(e, "Camera access exception getting characteristics.");
+    } catch (Exception e) {
+      Timber.e(e, "Error getting characteristics.");
     }
-    return file;
   }
 }

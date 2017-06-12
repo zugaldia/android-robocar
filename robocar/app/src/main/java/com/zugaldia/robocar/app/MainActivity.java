@@ -8,6 +8,7 @@ import android.view.KeyEvent;
 import com.zugaldia.robocar.hardware.adafruit2348.AdafruitDcMotor;
 import com.zugaldia.robocar.hardware.adafruit2348.AdafruitMotorHat;
 import com.zugaldia.robocar.software.camera.CameraOperator;
+import com.zugaldia.robocar.software.camera.CameraOperatorListener;
 import com.zugaldia.robocar.software.camera.SpeedOwner;
 import com.zugaldia.robocar.software.controller.nes30.Nes30Connection;
 import com.zugaldia.robocar.software.controller.nes30.Nes30Listener;
@@ -20,11 +21,15 @@ import com.zugaldia.robocar.software.webserver.models.RobocarSpeed;
 import com.zugaldia.robocar.software.webserver.models.RobocarStatus;
 
 import fi.iki.elonen.NanoHTTPD;
+
 import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
+
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity
-    implements Nes30Listener, RequestListener, SpeedOwner {
+    implements Nes30Listener, RequestListener, SpeedOwner, CameraOperatorListener {
 
   // Set the speed, from 0 (off) to 255 (max speed)
   private static final int MOTOR_SPEED = 255;
@@ -49,6 +54,10 @@ public class MainActivity extends AppCompatActivity
   private boolean allButtonsReleased = true;
 
   private CameraOperator cameraOperator;
+  private Timer timer;
+  private int cameraMode;
+  private static final int CAMERA_MODE_ONE = 1;
+  private static final int CAMERA_MODE_MULTIPLE = 2;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -72,7 +81,7 @@ public class MainActivity extends AppCompatActivity
     setupBluetooth();
 
     // Camera
-    cameraOperator = new CameraOperator(this);
+    cameraOperator = new CameraOperator(this, this, this);
   }
 
   @Override
@@ -127,7 +136,7 @@ public class MainActivity extends AppCompatActivity
     release();
     motorHat.close();
     nes30Connection.cancelDiscovery();
-    cameraOperator.shutDown();
+    endSession();
   }
 
   /*
@@ -187,20 +196,22 @@ public class MainActivity extends AppCompatActivity
         break;
       case Nes30Manager.BUTTON_X_CODE:
         if (isDown) {
-          Timber.d("Taking picture.");
-          cameraOperator.takePicture();
+          Timber.d("Starting camera session for single pics.");
+          cameraMode = CAMERA_MODE_ONE;
+          startSession();
         }
         break;
       case Nes30Manager.BUTTON_Y_CODE:
         if (isDown) {
-          Timber.d("Starting training session.");
-          cameraOperator.startTrainingSession(this);
+          Timber.d("Starting camera session for multiple pics.");
+          cameraMode = CAMERA_MODE_MULTIPLE;
+          startSession();
         }
         break;
       case Nes30Manager.BUTTON_A_CODE:
         if (isDown) {
-          Timber.d("Stopping training session.");
-          cameraOperator.stopTrainingSession();
+          Timber.d("Stopping camera session.");
+          endSession();
         }
         break;
       case Nes30Manager.BUTTON_KONAMI:
@@ -300,5 +311,38 @@ public class MainActivity extends AppCompatActivity
         motorFrontLeft, motorFrontRight, motorBackLeft, motorBackRight);
     speedChanger.changeSpeed(speed);
     return new RobocarResponse(200, "OK");
+  }
+
+  private void startSession() {
+    if (!cameraOperator.isInSession()) {
+      cameraOperator.startSession();
+    } else if (cameraMode == CAMERA_MODE_ONE) {
+      sessionStarted();
+    }
+  }
+
+  @Override
+  public void sessionStarted() {
+    switch (cameraMode) {
+      case CAMERA_MODE_ONE:
+        cameraOperator.takePicture();
+        break;
+      case CAMERA_MODE_MULTIPLE:
+        timer = new Timer("CAMERA_TRAINING");
+        timer.schedule(new TimerTask() {
+          @Override
+          public void run() {
+            cameraOperator.takePicture();
+          }
+        }, 0, 500); // 0 delay, 500 period
+        break;
+    }
+  }
+
+  private void endSession() {
+    if (timer != null) {
+      timer.cancel();
+    }
+    cameraOperator.endSession();
   }
 }
