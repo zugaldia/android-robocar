@@ -334,7 +334,7 @@ public class MainActivity extends AppCompatActivity
           public void run() {
             cameraOperator.takePicture();
           }
-        }, 0, 500); // 0 delay, 500 period
+        }, 0, 250); // 0 delay, 250 period
         break;
     }
   }

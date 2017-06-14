@@ -27,6 +27,11 @@ public class ImageSaver implements Runnable {
 
   @Override
   public void run() {
+    if (image == null) {
+      Timber.w("Empty image, skipping.");
+      return;
+    }
+
     ByteBuffer buffer = image.getPlanes()[0].getBuffer();
     byte[] bytes = new byte[buffer.remaining()];
     buffer.get(bytes);

@@ -43,7 +43,7 @@ public class CameraOperator implements
   private static final int IMAGE_WIDTH = 320;
   private static final int IMAGE_HEIGHT = 240;
   private static final int IMAGE_FORMAT = ImageFormat.JPEG;
-  private static final int MAX_IMAGES = 2;
+  private static final int MAX_IMAGES = 5;
   private static final String ROBOCAR_FOLDER = "robocar";
   private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.US);
 
@@ -249,7 +249,7 @@ public class CameraOperator implements
         speeds[0], speeds[1], speeds[2], speeds[3]);
     String filename = String.format(Locale.US, "robocar-%s-%d-%s-%s.jpg",
         sessionId, sessionCount++, timestamp, speedState);
-    backgroundHandler.post(new ImageSaver(reader.acquireNextImage(), root, filename));
+    backgroundHandler.post(new ImageSaver(reader.acquireLatestImage(), root, filename));
   }
 
   /**
