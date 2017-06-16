@@ -1,14 +1,17 @@
 package com.zugaldia.robocar.cv;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
+import org.bytedeco.javacpp.indexer.FloatIndexer;
 import org.bytedeco.javacpp.indexer.IntIndexer;
 import org.bytedeco.javacpp.opencv_core;
 import org.junit.Test;
 
-public class LaneManagerTest {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+public class LaneManagerTest extends BaseTest {
+
+  private final static double DELTA = 0.001;
 
   @Test
   public void testReadImage() {
@@ -93,11 +96,131 @@ public class LaneManagerTest {
   }
 
   @Test
+  public void testPerspectiveTransform() {
+    opencv_core.Mat src = LaneManager.readImage(
+        getResourcePath("/test_images/straightLines.jpg"));
+    float[] source = new float[] {
+        594, 451,
+        685, 451,
+        268, 677,
+        1037, 677};
+
+    float offset_x = 100;
+    float offset_y = offset_x * src.size().height() / src.size().width();
+    float[] destination = new float[] {
+        source[4] + offset_x, offset_y,
+        source[6] - offset_x, offset_y,
+        source[4] + offset_x, src.size().height(),
+        source[6] - offset_x, src.size().height()};
+    opencv_core.Mat warped = LaneManager.perspectiveTransform(src, source, destination);
+    assertTrue(LaneManager.writeImage("/tmp/straightLines_warped.jpg", warped));
+  }
+
+  @Test
+  public void testGetSaturationChannel() {
+    opencv_core.Mat src = LaneManager.readImage(
+        getResourcePath("/test_images/straightLines.jpg"));
+    opencv_core.Mat saturationChannel = LaneManager.getSaturationChannel(src);
+    assertTrue(LaneManager.writeImage("/tmp/straightLines_saturationChannel.jpg", saturationChannel));
+  }
+
+  @Test
+  public void testThreshold() {
+    opencv_core.Mat src = LaneManager.readImage(
+        getResourcePath("/test_images/straightLines.jpg"));
+    opencv_core.Mat saturationChannel = LaneManager.getSaturationChannel(src);
+    opencv_core.Mat thresholdBinary = LaneManager.threshold(saturationChannel, 150);
+    assertTrue(LaneManager.writeImage("/tmp/straightLines_thresholded.jpg", thresholdBinary));
+  }
+
+  @Test
+  public void testHistogramArray() {
+    opencv_core.Mat src = LaneManager.readImage(
+        getResourcePath("/test_images/straightLines.jpg"));
+    opencv_core.Mat saturationChannel = LaneManager.getSaturationChannel(src);
+    opencv_core.Mat thresholdBinary = LaneManager.threshold(saturationChannel, 150);
+    int[] histogram = LaneManager.histogramArray(thresholdBinary);
+
+    assertEquals(histogram.length, LaneManager.HISTOGRAM_BINS);
+    drawHistogram(histogram, thresholdBinary, "/tmp/straightLines_histogramArray.jpg");
+  }
+
+  @Test
+  public void testHistogram() {
+    opencv_core.Mat src = LaneManager.readImage(
+        getResourcePath("/test_images/straightLines.jpg"));
+    opencv_core.Mat saturationChannel = LaneManager.getSaturationChannel(src);
+    opencv_core.UMat histogram = LaneManager.histogram(saturationChannel);
+    assertTrue(LaneManager.writeImage("/tmp/straightLines_histogram.jpg", histogram));
+
+    assertEquals(histogram.size().height(), 32);
+    assertEquals(histogram.size().width(), 1);
+    assertEquals(histogram.rows(), 32);
+    assertEquals(histogram.cols(), 1);
+  }
+
+  @Test
+  public void testGetMaxPosition() {
+    opencv_core.Mat src = LaneManager.readImage(
+        getResourcePath("/test_images/straightLines.jpg"));
+    opencv_core.Mat saturationChannel = LaneManager.getSaturationChannel(src);
+    opencv_core.UMat histogram = LaneManager.histogram(saturationChannel);
+
+    // Compute manual
+    float max = -1.0f;
+    int maxIndex = -1;
+    FloatIndexer idx = histogram.getMat(0).createIndexer();
+    for (int row = 0; row < histogram.rows(); row++) {
+      for (int col = 0; col < histogram.cols(); col++) {
+        float value = idx.get(row, col);
+        //System.out.println(String.format(Locale.US, "row: %d, col: %d, value: %f", row, col, value));
+        if (max == -1 || value > max) {
+          maxIndex = row;
+          max = value;
+        }
+      }
+    }
+
+    // Compute with OpenCV
+    HistogramPosition position = LaneManager.getMaxPosition(histogram);
+
+    // Both results should match
+    assertEquals(position.getBinIndex(), 4);
+    assertEquals(position.getBinValue(), 86152.0, DELTA);
+    assertEquals(position.getBinIndex(), maxIndex);
+    assertEquals(position.getBinValue(), max, DELTA);
+  }
+
+  @Test
+  public void testFindLane() {
+    opencv_core.Mat src = LaneManager.readImage(
+        getResourcePath("/test_images/straightLines.jpg"));
+
+    float[] fromPoints = getSampleFromPoints();
+    opencv_core.Mat warped = LaneManager.perspectiveTransform(
+        src, fromPoints, getSampleToPoints(fromPoints, src.size().width(), src.size().height()));
+
+    opencv_core.Mat cropped = LaneManager.crop(warped,
+        0, warped.size().height() / 2,
+        warped.size().width(), warped.size().height() / 2);
+
+    opencv_core.Mat saturationChannel = LaneManager.getSaturationChannel(cropped);
+    opencv_core.Mat thresholdBinary = LaneManager.threshold(saturationChannel, 150);
+
+    int[] histogram = LaneManager.histogramArray(thresholdBinary);
+    HistogramPosition position = LaneManager.getMaxPosition(histogram);
+    assertEquals(position.getBinIndex(), 9);
+    assertEquals(position.getBinValue(), 5147, DELTA);
+
+    drawHistogram(histogram, thresholdBinary, "/tmp/straightLines_lane.jpg");
+  }
+
+  @Test
   public void testDrawLine() {
     opencv_core.Mat src = LaneManager.readImage(
         getResourcePath("/test_images/solidWhiteRight.jpg"));
     opencv_core.Scalar color = new opencv_core.Scalar(255, 0, 0, 0); // Blue (BGR)
-    LaneManager.doDrawLine(src,
+    LaneManager.drawLine(src,
         new opencv_core.Point(0, 0), // top left
         new opencv_core.Point(src.size().width(), src.size().height()), // bottom right
         color, 5);
@@ -117,7 +240,7 @@ public class LaneManagerTest {
     IntIndexer linesIndexer = lines.createIndexer();
     for (int i = 0; i < linesIndexer.rows(); i++) {
       for (int j = 0; j < linesIndexer.cols(); j++) {
-        LaneManager.doDrawLine(original,
+        LaneManager.drawLine(original,
             new opencv_core.Point(linesIndexer.get(i, j, 0), linesIndexer.get(i, j, 1)),
             new opencv_core.Point(linesIndexer.get(i, j, 2), linesIndexer.get(i, j, 3)),
             color, 5);
