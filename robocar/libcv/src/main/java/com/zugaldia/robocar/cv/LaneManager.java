@@ -1,6 +1,8 @@
 package com.zugaldia.robocar.cv;
 
 import org.bytedeco.javacpp.DoublePointer;
+import org.bytedeco.javacpp.FloatPointer;
+import org.bytedeco.javacpp.IntPointer;
 import org.bytedeco.javacpp.indexer.UByteRawIndexer;
 import org.bytedeco.javacpp.opencv_core;
 import org.bytedeco.javacpp.opencv_imgcodecs;
@@ -36,10 +38,6 @@ public class LaneManager {
    * Write image object into specific path.
    */
   public static boolean writeImage(String filename, opencv_core.Mat img) {
-    return opencv_imgcodecs.imwrite(filename, img);
-  }
-
-  public static boolean writeImage(String filename, opencv_core.UMat img) {
     return opencv_imgcodecs.imwrite(filename, img);
   }
 
@@ -161,21 +159,28 @@ public class LaneManager {
    * Calculates a histogram of an image. Unfortunately, I can't get this to work,
    * the returned values don't make sense.
    */
-  public static opencv_core.UMat histogram(opencv_core.Mat image) {
+  public static opencv_core.Mat histogram(opencv_core.Mat image) {
     if (image.channels() != 1) {
       throw new LaneManagerException("Histogram expects images with one channel only.");
     }
 
-    int[] channels = new int[] {0}; // Assume 1 channel
-    int[] histSize = new int[] {HISTOGRAM_BINS}; // 32 bins
+    // Assume 1 channel
+    int[] channels = new int[] {0};
+    IntPointer channelsPointer = new IntPointer(channels);
+
+    // 32 bins
+    int[] histSize = new int[] {HISTOGRAM_BINS};
+    IntPointer histSizePointer = new IntPointer(histSize);
 
     // Saturation varies from 0 (black-gray-white) to 255 (pure spectrum color)
-    float[] ranges = new float[] {0, 256}; // upper limit is exclusive
+    float[] ranges = new float[] {0, 256}; // Upper limit is exclusive
+    FloatPointer rangesPointer = new FloatPointer(1);
+    rangesPointer.put(ranges, 0, ranges.length);
 
-    opencv_core.UMat mask = new opencv_core.UMat();
-    opencv_core.UMat histogram = new opencv_core.UMat();
-    opencv_imgproc.calcHist(image, 1 /* nimages */, channels, mask, histogram, 1 /* dims */,
-        histSize, ranges, true /* uniform */, false /* accumulate */);
+    opencv_core.Mat mask = new opencv_core.Mat();
+    opencv_core.Mat histogram = new opencv_core.Mat();
+    opencv_imgproc.calcHist(image, 1, channelsPointer, mask, histogram, 1 /* dims */,
+        histSizePointer, rangesPointer, true /* uniform */, false /* accumulate */);
 
     return histogram;
   }
@@ -183,7 +188,7 @@ public class LaneManager {
   /**
    * See: https://github.com/bytedeco/javacpp-presets/issues/432
    */
-  public static HistogramPosition getMaxPosition(opencv_core.UMat histogram) {
+  public static HistogramPosition getMaxPosition(opencv_core.Mat histogram) {
     DoublePointer minVal = new DoublePointer(1);
     DoublePointer maxVal = new DoublePointer(1);
     opencv_core.Point minLoc = new opencv_core.Point(1);

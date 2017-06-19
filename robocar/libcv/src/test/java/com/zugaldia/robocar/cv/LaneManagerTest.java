@@ -150,7 +150,7 @@ public class LaneManagerTest extends BaseTest {
     opencv_core.Mat src = LaneManager.readImage(
         getResourcePath("/test_images/straightLines.jpg"));
     opencv_core.Mat saturationChannel = LaneManager.getSaturationChannel(src);
-    opencv_core.UMat histogram = LaneManager.histogram(saturationChannel);
+    opencv_core.Mat histogram = LaneManager.histogram(saturationChannel);
     assertTrue(LaneManager.writeImage("/tmp/straightLines_histogram.jpg", histogram));
 
     assertEquals(histogram.size().height(), 32);
@@ -164,12 +164,12 @@ public class LaneManagerTest extends BaseTest {
     opencv_core.Mat src = LaneManager.readImage(
         getResourcePath("/test_images/straightLines.jpg"));
     opencv_core.Mat saturationChannel = LaneManager.getSaturationChannel(src);
-    opencv_core.UMat histogram = LaneManager.histogram(saturationChannel);
+    opencv_core.Mat histogram = LaneManager.histogram(saturationChannel);
 
     // Compute manual
     float max = -1.0f;
     int maxIndex = -1;
-    FloatIndexer idx = histogram.getMat(0).createIndexer();
+    FloatIndexer idx = histogram.createIndexer();
     for (int row = 0; row < histogram.rows(); row++) {
       for (int col = 0; col < histogram.cols(); col++) {
         float value = idx.get(row, col);
