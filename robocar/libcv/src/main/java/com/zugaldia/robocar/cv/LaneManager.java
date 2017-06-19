@@ -186,7 +186,7 @@ public class LaneManager {
   }
 
   /**
-   * See: https://github.com/bytedeco/javacpp-presets/issues/432
+   * Obtain max values and bin number from a histogram object.
    */
   public static HistogramPosition getMaxPosition(opencv_core.Mat histogram) {
     DoublePointer minVal = new DoublePointer(1);
@@ -198,6 +198,7 @@ public class LaneManager {
   }
 
   /**
+   * Obtain max values and bin number from a histogram object.
    * Workaround while ^^^ gets fixed.
    */
   public static HistogramPosition getMaxPosition(int[] histogram) {
