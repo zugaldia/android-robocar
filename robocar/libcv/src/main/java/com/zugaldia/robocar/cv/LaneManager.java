@@ -89,7 +89,7 @@ public class LaneManager {
     opencv_core.Mat mask = new opencv_core.Mat(image.size(), image.type());
 
     // Array of polygons where each polygon is represented as an array of points
-    opencv_core.Point polygon = new opencv_core.Point();
+    opencv_core.Point polygon = new opencv_core.Point(points.length);
     polygon.put(points, 0, points.length);
     opencv_imgproc.fillPoly(mask, polygon, new int[] {points.length / 2}, 1, WHITE);
 
@@ -105,9 +105,9 @@ public class LaneManager {
   public static opencv_core.Mat perspectiveTransform(
       opencv_core.Mat image, float[] fromPoints, float[] toPoints) {
     // Convert float[] into Point2f
-    opencv_core.Point2f fromPointsWrapped = new opencv_core.Point2f();
+    opencv_core.Point2f fromPointsWrapped = new opencv_core.Point2f(fromPoints.length);
     fromPointsWrapped.put(fromPoints, 0, fromPoints.length);
-    opencv_core.Point2f toPointsWrapped = new opencv_core.Point2f();
+    opencv_core.Point2f toPointsWrapped = new opencv_core.Point2f(toPoints.length);
     toPointsWrapped.put(toPoints, 0, toPoints.length);
 
     // Get perspective transformation for the corresponding 4 point pairs
@@ -174,7 +174,7 @@ public class LaneManager {
 
     // Saturation varies from 0 (black-gray-white) to 255 (pure spectrum color)
     float[] ranges = new float[] {0, 256}; // Upper limit is exclusive
-    FloatPointer rangesPointer = new FloatPointer(1);
+    FloatPointer rangesPointer = new FloatPointer(ranges.length);
     rangesPointer.put(ranges, 0, ranges.length);
 
     opencv_core.Mat mask = new opencv_core.Mat();
