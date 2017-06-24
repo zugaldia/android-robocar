@@ -160,7 +160,7 @@ public class AdafruitPwm {
     try {
       i2c.writeRegByte(reg, data);
     } catch (IOException e) {
-      Timber.e(e, "writeRegByte to 0x%02X failed: %s", reg);
+      Timber.e(e, "writeRegByte to 0x%02X failed.", reg);
       return;
     }
 
@@ -175,7 +175,7 @@ public class AdafruitPwm {
     try {
       data = i2c.readRegByte(reg);
     } catch (IOException e) {
-      Timber.d(e, "readRegByte from 0x%02X failed: %s", reg);
+      Timber.d(e, "readRegByte from 0x%02X failed.", reg);
     }
 
     if (debug) {
