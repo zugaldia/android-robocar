@@ -18,6 +18,8 @@ import android.support.v4.app.ActivityCompat;
 import android.util.Size;
 import android.view.Surface;
 
+import com.zugaldia.robocar.software.storage.RobocarStorage;
+
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
@@ -44,7 +46,6 @@ public class CameraOperator implements
   private static final int IMAGE_HEIGHT = 240;
   private static final int IMAGE_FORMAT = ImageFormat.JPEG;
   private static final int MAX_IMAGES = 5;
-  private static final String ROBOCAR_FOLDER = "robocar";
   private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.US);
 
   private CameraOperatorListener listener;
@@ -88,12 +89,12 @@ public class CameraOperator implements
   private void init(Context context) throws CameraAccessException {
     inSession = false;
 
-    if (!ImageSaver.isExternalStorageWritable()) {
+    if (!RobocarStorage.isExternalStorageWritable()) {
       Timber.e("Cannot save file, external storage is not writable.");
       return;
     }
 
-    root = ImageSaver.getRoot(ROBOCAR_FOLDER);
+    root = RobocarStorage.getPicturesStorageDirectory();
     if (root == null) {
       Timber.e("Failed to create destination folder.");
       return;

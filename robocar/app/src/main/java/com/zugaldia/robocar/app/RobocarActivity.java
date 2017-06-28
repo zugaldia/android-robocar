@@ -13,6 +13,8 @@ import com.zugaldia.robocar.software.camera.SpeedOwner;
 import com.zugaldia.robocar.software.controller.nes30.Nes30Connection;
 import com.zugaldia.robocar.software.controller.nes30.Nes30Listener;
 import com.zugaldia.robocar.software.controller.nes30.Nes30Manager;
+import com.zugaldia.robocar.software.options.OptionsCallback;
+import com.zugaldia.robocar.software.options.RobocarOptions;
 import com.zugaldia.robocar.software.webserver.LocalWebServer;
 import com.zugaldia.robocar.software.webserver.RequestListener;
 import com.zugaldia.robocar.software.webserver.models.RobocarMove;
@@ -28,8 +30,8 @@ import java.util.TimerTask;
 
 import timber.log.Timber;
 
-public class MainActivity extends AppCompatActivity
-    implements Nes30Listener, RequestListener, SpeedOwner, CameraOperatorListener {
+public class RobocarActivity extends AppCompatActivity
+    implements Nes30Listener, RequestListener, SpeedOwner, CameraOperatorListener, OptionsCallback {
 
   // Set the speed, from 0 (off) to 255 (max speed)
   private static final int MOTOR_SPEED = 255;
@@ -59,6 +61,8 @@ public class MainActivity extends AppCompatActivity
   private static final int CAMERA_MODE_ONE = 1;
   private static final int CAMERA_MODE_MULTIPLE = 2;
 
+  private RobocarOptions robocarOptions;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -77,11 +81,25 @@ public class MainActivity extends AppCompatActivity
     // Local web server
     setupWebServer();
 
-    // NES30 BT connection
-    setupBluetooth();
-
     // Camera
     cameraOperator = new CameraOperator(this, this, this);
+
+    // Async options
+    robocarOptions = new RobocarOptions(this);
+    robocarOptions.load();
+  }
+
+  @Override
+  public void onLoad() {
+    // Options successfully loaded
+    setupBluetooth();
+  }
+
+  @Override
+  public void onError(String error) {
+    // Options failed to load
+    Timber.e("Failed to load options: %s", error);
+    setupBluetooth();
   }
 
   @Override
@@ -117,8 +135,9 @@ public class MainActivity extends AppCompatActivity
   }
 
   private void setupBluetooth() {
-    nes30Connection = new Nes30Connection(
-        this, RobocarConstants.NES30_NAME, RobocarConstants.NES30_MAC_ADDRESS);
+    nes30Connection = new Nes30Connection(this,
+        robocarOptions.getOptions().getBluetoothName(),
+        robocarOptions.getOptions().getBluetoothAddress());
 
     Timber.d("BT status: %b", nes30Connection.isEnabled());
     Timber.d("Paired devices: %d", nes30Connection.getPairedDevices().size());
