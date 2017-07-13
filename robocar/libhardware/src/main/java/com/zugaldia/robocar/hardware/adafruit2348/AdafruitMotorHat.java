@@ -2,7 +2,7 @@ package com.zugaldia.robocar.hardware.adafruit2348;
 
 /**
  * A port of `Adafruit_MotorHAT` to Android Things.
- *
+ * <p>
  * <p>https://github.com/adafruit/Adafruit-Motor-HAT-Python-Library/blob/master/Adafruit_MotorHAT/Adafruit_MotorHAT.py
  */
 
@@ -26,14 +26,14 @@ public class AdafruitMotorHat {
   /**
    * Public constructor.
    */
-  public AdafruitMotorHat() {
-    pwm = new AdafruitPwm();
+  public AdafruitMotorHat(String i2cName, int i2cAddress) {
+    pwm = new AdafruitPwm(i2cName, i2cAddress);
     pwm.setPwmFreq(MOTOR_FREQUENCY);
-    motors = new AdafruitDcMotor[] {
-        new AdafruitDcMotor(this, 0),
-        new AdafruitDcMotor(this, 1),
-        new AdafruitDcMotor(this, 2),
-        new AdafruitDcMotor(this, 3)
+    motors = new AdafruitDcMotor[]{
+            new AdafruitDcMotor(this, 0),
+            new AdafruitDcMotor(this, 1),
+            new AdafruitDcMotor(this, 2),
+            new AdafruitDcMotor(this, 3)
     };
   }
 
@@ -75,4 +75,5 @@ public class AdafruitMotorHat {
   public void close() {
     pwm.close();
   }
+
 }
