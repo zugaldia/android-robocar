@@ -2,13 +2,16 @@
 
 Interested in building your own Android Robocar? These are some off-the-shelf components that we use to build our cars.
 
+
 ### Basic Robocar
 
 This is what you need to put together a basic Robocar:
 
-* Raspberry Pi, your Robocar brain.
+* NXP Pico, your Robocar brain.
 
-  * Recommended: You might want to start with Adafruit's [Raspberry Pi 3 Board Pack for Android Things](https://www.adafruit.com/products/3292) ($59.95), that comes with an SD card to flash Android Things.
+  * Recommended: [PICO-PI-IMX7](https://shop.technexion.com/pico-pi-imx7.html) ($79.00). It's a Raspberry Pi-compatible board which is easier to set up than the Pi. You don't need to buy the separate SD Card and `adb` works over USB.
+
+  * Alternative: A Raspberry Pi. You might want to start with Adafruit's [Raspberry Pi 3 Board Pack for Android Things](https://www.adafruit.com/products/3292) ($59.95), that comes with an SD card to flash Android Things.
 
 * Frame, your Robocar wheels.
 
@@ -20,7 +23,7 @@ This is what you need to put together a basic Robocar:
 
 * Motor controller, to connect your motors to the Raspberry Pi.
 
-  * Recommended: Adafruit's [DC & Stepper Motor HAT for Raspberry Pi](https://www.adafruit.com/products/2348) ($22.50). We've ported the Python library to Android so that you can control your motors from Java. **Note: some basic soldering required.**
+  * Recommended: Adafruit's [DC & Stepper Motor Hat for Raspberry Pi](https://www.adafruit.com/products/2348) ($22.50). We've ported the Python library to Android so that you can control your motors from Java. **Note: some basic soldering required.**
 
   * Alternative: Adafruit's [16-Channel 12-bit PWM/Servo Driver - I2C interface - PCA9685](https://www.adafruit.com/product/815) ($14.95). **Note: some basic soldering required.**
 
@@ -31,6 +34,13 @@ This is what you need to put together a basic Robocar:
   * Recommended: You could use a different battery pack for the motors and for the Raspberry Pi but we recommend using the same for both to make things simpler. For example, you could buy a portable charger like [this one](https://www.amazon.com/gp/product/B00Z9QVE4Q/) ($29.99) that supports two USB ports.
 
   * Alternative: A cheaper option is to simply use a 4xAA battery holder [like this one](https://www.adafruit.com/products/830) ($2.95) for the motors.
+
+* Cable, to connect the Motor Hat to the battery.
+
+  * Recommended: [USB to TTL Serial Cable](https://www.adafruit.com/product/954) ($9.95). In fact, this cable is designed for more than this, you can use it to [connect to the serial debug console](https://developer.android.com/things/hardware/raspberrypi.html), which is always handy.
+
+  * Alternative: You can roll your own, which is much cheaper.
+
 
 ### Optional elements
 
@@ -55,6 +65,11 @@ This is what you need to put together a basic Robocar:
 * Soldering station.
 
   * Recommended: [I really like this one](http://amzn.to/2nwGdLW) ($96.72).
+
+
+### Next: Put it all together
+
+[Continue reading.](pages/build)
 
 ---
 
