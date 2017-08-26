@@ -32,7 +32,7 @@ android {
 
             // Specifies a list of ABIs that Gradle should create APKs for (Raspberry Pi only).
             // Options are: armeabi-v7a, armeabi
-            include "armeabi-v7a"
+            include "armeabi"
 
             // Specifies that we do not want to also generate a universal APK that includes all ABIs.
             universalApk false
@@ -44,7 +44,7 @@ dependencies {
     // Our shared libraries
     compile project(':libhardware')
     compile project(':libsoftware')
-    //compile project(':libcv')
+    compile project(':libcv')
 
     // Android Support Libraries
     compile 'com.android.support:appcompat-v7:25.3.1'
