@@ -73,7 +73,7 @@ public class ImageSaver implements Runnable {
     if (file.mkdirs()) {
       Timber.d("Root folder created: %s.", file.getAbsolutePath());
     } else {
-      Timber.e("Could not create root folder (it probably existed already): %s.",
+      Timber.w("Could not create root folder (it probably existed already): %s.",
           file.getAbsolutePath());
     }
 
