@@ -26,7 +26,7 @@ android {
 
 dependencies {
     // Android Things
-    provided 'com.google.android.things:androidthings:0.4-devpreview'
+    provided 'com.google.android.things:androidthings:0.5.1-devpreview'
 
     // Logging
     compile 'com.jakewharton.timber:timber:4.5.1'
