@@ -26,8 +26,8 @@ public class AdafruitMotorHat {
   /**
    * Public constructor.
    */
-  public AdafruitMotorHat(String i2cName, int i2cAddress) {
-    pwm = new AdafruitPwm(i2cName, i2cAddress);
+  public AdafruitMotorHat(String i2cName, int i2cAddress, boolean debug) {
+    pwm = new AdafruitPwm(i2cName, i2cAddress, debug);
     pwm.setPwmFreq(MOTOR_FREQUENCY);
     motors = new AdafruitDcMotor[]{
             new AdafruitDcMotor(this, 0),
