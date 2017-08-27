@@ -182,9 +182,7 @@ public class MainActivity extends AppCompatActivity
 
     switch (keyCode) {
       case Nes30Manager.BUTTON_UP_CODE:
-//        moveForward();
-        cameraMode = CAMERA_MODE_ONE;
-        startSession();
+        moveForward();
         break;
       case Nes30Manager.BUTTON_DOWN_CODE:
         moveBackward();
