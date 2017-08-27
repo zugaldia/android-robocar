@@ -184,7 +184,7 @@ public class LaneManagerTest extends BaseTest {
 
     // Both results should match
     assertEquals(position.getBinIndex(), 21);
-    assertEquals(position.getBinValue(), 21541.0, DELTA);
+    assertEquals(position.getBinValue(), 36377.0, DELTA);
     assertEquals(position.getBinIndex(), maxIndex);
     assertEquals(position.getBinValue(), max, DELTA);
   }
