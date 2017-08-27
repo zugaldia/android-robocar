@@ -30,7 +30,7 @@ android {
             // Resets the list of ABIs that Gradle should create APKs for to none.
             reset()
 
-            // Specifies a list of ABIs that Gradle should create APKs for (Raspberry Pi only).
+            // Specifies a list of ABIs that Gradle should create APKs for (Pico, Raspberry Pi only).
             // Options are: armeabi-v7a, armeabi
             include "armeabi"
 
@@ -44,7 +44,7 @@ dependencies {
     // Our shared libraries
     compile project(':libhardware')
     compile project(':libsoftware')
-    compile project(':libcv')
+    //compile project(':libcv')
 
     // Android Support Libraries
     compile 'com.android.support:appcompat-v7:25.3.1'

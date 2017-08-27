@@ -25,10 +25,11 @@ android {
 }
 
 dependencies {
-    // JavaCV
-    // For some reason, the usual way of including the dependency (below) gives an error
-    // that seems related to https://github.com/bytedeco/javacv/issues/353. Meanwhile,
-    // we're manually including the JAR files which isn't ideal but works.
+    // JavaCV dependency. This adds opencv-android-arm.jar (9.0M) to the build, which makes
+    // installation slightly slower. Note that for some reason, the usual way of including the
+    // dependency (commented below) gives an error that seems related to
+    // https://github.com/bytedeco/javacv/issues/353. Meanwhile, we're manually including the
+    // JAR files, which isn't ideal but works.
     //compile 'org.bytedeco.javacpp-presets:opencv-platform:3.2.0-1.3'
     compile fileTree(dir: "libs", include: ["*.jar"])
 

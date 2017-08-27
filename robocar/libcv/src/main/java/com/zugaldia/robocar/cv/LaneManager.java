@@ -17,8 +17,18 @@ import org.bytedeco.javacpp.opencv_imgproc;
 public class LaneManager {
 
   private static final opencv_core.Scalar WHITE = new opencv_core.Scalar(255, 255, 255, 0);
+  private static final opencv_core.Scalar BLACK = new opencv_core.Scalar(0, 0, 0, 0);
+
+  private static final opencv_core.Scalar TAPE_COLOR_MIN = new opencv_core.Scalar(25, 0, 0, 0);
+  private static final opencv_core.Scalar TAPE_COLOR_MAX = new opencv_core.Scalar(50, 15, 255, 0);
 
   public static final int HISTOGRAM_BINS = 32;
+
+  public static final float[] SOURCE_POINTS = new float[] {
+      132, 92, // top right
+      184, 92, // top left
+      29, 187, // bottom right
+      305, 187}; // bottom left
 
   /**
    * Read image path into object.
@@ -120,22 +130,63 @@ public class LaneManager {
     return warped;
   }
 
-  public static opencv_core.Mat getSaturationChannel(opencv_core.Mat image) {
+  public static float[] getToPoints(int width, int height) {
+    float offsetX = 50;
+    float offsetY = offsetX * height / width;
+    return new float[] {
+        SOURCE_POINTS[4] + offsetX, offsetY,
+        SOURCE_POINTS[6] - offsetX, offsetY,
+        SOURCE_POINTS[4] + offsetX, height,
+        SOURCE_POINTS[6] - offsetX, height};
+  }
+
+  public static opencv_core.Mat imageToHsv(opencv_core.Mat image) {
     opencv_core.Mat hsv = new opencv_core.Mat();
     opencv_imgproc.cvtColor(image, hsv, opencv_imgproc.COLOR_BGR2HSV);
+    return hsv;
+  }
+
+  public static opencv_core.Mat getSaturationChannel(opencv_core.Mat image) {
+    opencv_core.Mat hsv = imageToHsv(image);
     opencv_core.MatVector channels = new opencv_core.MatVector();
     opencv_core.split(hsv, channels);
-    return channels.get(1);
+    return channels.get(0);
+  }
+
+  public static opencv_core.Mat getYuvChannel(opencv_core.Mat image) {
+    opencv_core.Mat hsv = new opencv_core.Mat();
+    opencv_imgproc.cvtColor(image, hsv, opencv_imgproc.COLOR_BGR2YUV);
+    opencv_core.MatVector channels = new opencv_core.MatVector();
+    opencv_core.split(hsv, channels);
+    return channels.get(0);
   }
 
   public static opencv_core.Mat threshold(opencv_core.Mat image, double minValue) {
+    return threshold(image, minValue, 255);
+  }
+
+  public static opencv_core.Mat threshold(opencv_core.Mat image, double minValue, double maxValue) {
     opencv_core.Mat thresholdBinary = new opencv_core.Mat();
-    opencv_imgproc.threshold(image, thresholdBinary, minValue, 255, opencv_imgproc.CV_THRESH_BINARY);
+    opencv_imgproc.threshold(image, thresholdBinary, minValue, maxValue, opencv_imgproc.CV_THRESH_BINARY);
+    return thresholdBinary;
+  }
+
+  public static opencv_core.Mat thresholdColor(opencv_core.Mat image) {
+    return thresholdColor(image, TAPE_COLOR_MIN, TAPE_COLOR_MAX);
+  }
+
+  public static opencv_core.Mat thresholdColor(opencv_core.Mat image, opencv_core.Scalar tapeColorMin, opencv_core.Scalar tapeColorMax) {
+    opencv_core.Mat thresholdBinary = new opencv_core.Mat();
+    opencv_core.Mat hsv = LaneManager.imageToHsv(image);
+    opencv_core.Mat lower = new opencv_core.Mat(image.rows(), image.cols(), image.type(), tapeColorMin);
+    opencv_core.Mat upper = new opencv_core.Mat(image.rows(), image.cols(), image.type(), tapeColorMax);
+    opencv_core.inRange(hsv, lower, upper, thresholdBinary);
     return thresholdBinary;
   }
 
   /**
-   * Compute the histogram manually.
+   * Compute the histogram manually. edgeColsIgnore sets a number of side cols to ignore to
+   * avoid side noise affect the result.
    */
   public static int[] histogramArray(opencv_core.Mat image) {
     final int[] result = new int[HISTOGRAM_BINS];
@@ -198,7 +249,7 @@ public class LaneManager {
   }
 
   /**
-   * Obtain max values and bin number from a histogram object.
+   * Obtain min values and bin number from a histogram object.
    * Workaround while ^^^ gets fixed.
    */
   public static HistogramPosition getMaxPosition(int[] histogram) {
@@ -212,6 +263,14 @@ public class LaneManager {
     }
 
     return new HistogramPosition(binIndex, binValue);
+  }
+
+  public static HistogramPosition findLane(opencv_core.Mat src ) {
+    opencv_core.Mat warped = LaneManager.perspectiveTransform(
+        src, LaneManager.SOURCE_POINTS, LaneManager.getToPoints(src.size().width(), src.size().height()));
+    opencv_core.Mat thresholdBinary = LaneManager.thresholdColor(warped);
+    int[] histogram = LaneManager.histogramArray(thresholdBinary);
+    return LaneManager.getMaxPosition(histogram);
   }
 
   /**
