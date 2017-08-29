@@ -30,9 +30,9 @@ android {
             // Resets the list of ABIs that Gradle should create APKs for to none.
             reset()
 
-            // Specifies a list of ABIs that Gradle should create APKs for (Raspberry Pi only).
+            // Specifies a list of ABIs that Gradle should create APKs for (Pico, Raspberry Pi only).
             // Options are: armeabi-v7a, armeabi
-            include "armeabi-v7a"
+            include "armeabi"
 
             // Specifies that we do not want to also generate a universal APK that includes all ABIs.
             universalApk false

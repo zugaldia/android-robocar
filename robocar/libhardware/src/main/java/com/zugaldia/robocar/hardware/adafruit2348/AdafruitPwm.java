@@ -11,15 +11,12 @@ import timber.log.Timber;
  * A port of `Adafruit_PWM_Servo_Driver` (Adafruit PCA9685 16-Channel PWM Servo
  * Driver) to Android Things. Instead of using `Adafruit_I2C` we're using the
  * `I2cDevice` class shipped with Android Things.
- *
+ * <p>
  * <p>https://github.com/adafruit/Adafruit-Motor-HAT-Python-Library/blob/master/Adafruit_MotorHAT/Adafruit_PWM_Servo_Driver.py
  * https://developer.android.com/things/sdk/pio/i2c.html
  */
 
 public class AdafruitPwm {
-
-  public static final String I2C_DEVICE_NAME = "I2C1";
-  public static final int I2C_ADDRESS = 0x60;
 
   // Registers
   private static final int __MODE1 = 0x00;
@@ -50,8 +47,8 @@ public class AdafruitPwm {
   /**
    * Public constructor.
    */
-  public AdafruitPwm() {
-    this(I2C_DEVICE_NAME, I2C_ADDRESS, false);
+  public AdafruitPwm(String i2cName, int i2cAddress) {
+    this(i2cName, i2cAddress, true);
   }
 
   /**
@@ -64,7 +61,7 @@ public class AdafruitPwm {
       PeripheralManagerService manager = new PeripheralManagerService();
       i2c = manager.openI2cDevice(deviceName, address);
     } catch (IOException e) {
-      Timber.w(e, "Unable to access I2C device.");
+      Timber.e(e, "Unable to access I2C device.");
     }
 
     this.debug = debug;

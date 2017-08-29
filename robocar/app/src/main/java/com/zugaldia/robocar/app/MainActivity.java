@@ -20,10 +20,9 @@ import com.zugaldia.robocar.software.webserver.models.RobocarResponse;
 import com.zugaldia.robocar.software.webserver.models.RobocarSpeed;
 import com.zugaldia.robocar.software.webserver.models.RobocarStatus;
 
-import fi.iki.elonen.NanoHTTPD;
-
 import java.io.IOException;
 
+import fi.iki.elonen.NanoHTTPD;
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity implements Nes30Listener, HTTPRequestListener {
@@ -39,13 +38,18 @@ public class MainActivity extends AppCompatActivity implements Nes30Listener, HT
   private CameraDriver cameraDriver;
   private TensorFlowTrainer tensorFlowTrainer;
 
+  // I2C Name
+  public static final String I2C_DEVICE_NAME = "I2C1";
+  // Adafruit Motor Hat
+  private static final int MOTOR_HAT_I2C_ADDRESS = 0x60;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
     // Motors
-    motorHat = new AdafruitMotorHat();
+    motorHat = new AdafruitMotorHat(I2C_DEVICE_NAME, MOTOR_HAT_I2C_ADDRESS, false);
 
     // Remote control (for RCDriver)
     setupBluetooth();
@@ -70,12 +74,11 @@ public class MainActivity extends AppCompatActivity implements Nes30Listener, HT
 
   private void setupBluetooth() {
     nes30Manager = new Nes30Manager(this);
-    nes30Connection = new Nes30Connection(
-        this, RobocarConstants.NES30_NAME, RobocarConstants.NES30_MAC_ADDRESS);
-
+    nes30Connection = new Nes30Connection(this, RobocarConstants.NES30_MAC_ADDRESS);
     Timber.d("BT status: %b", nes30Connection.isEnabled());
     Timber.d("Paired devices: %d", nes30Connection.getPairedDevices().size());
-    BluetoothDevice nes30device = nes30Connection.isPaired();
+
+    BluetoothDevice nes30device = nes30Connection.getSelectedDevice();
     if (nes30device == null) {
       Timber.d("Starting discovery: %b", nes30Connection.startDiscovery());
     } else {

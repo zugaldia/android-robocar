@@ -3,20 +3,15 @@ Welcome to the Android Robocar project!
 ![img_20170225_154112](https://cloud.githubusercontent.com/assets/6964/23334669/afefdc60-fb71-11e6-91ca-f8d1c32df33e.jpg)
 
 
-
 ## Getting started
 
-1. Get the [hardware](pages/hardware).
-2. Get the software (coming soon).
-3. Join the [community](https://www.meetup.com/DIYRobocarsDC/).
-
+1. [Get the hardware.](pages/hardware)
+2. [Put it together.](pages/build)
+2. [Install the software.](pages/software)
 
 
 ## Upcoming Android Robocar events
 
-- [DIY Robocars DC](https://www.meetup.com/DIYRobocarsDC/) (coding session), June 12, 2017
-- [DIY Robocars DC](https://www.meetup.com/DIYRobocarsDC/events/240486025/) (data collection session), June 24, 2017
-- [DC Android meetup](https://www.meetup.com/DCAndroid/events/237985008/) during [AnDevCon](http://www.andevcon.com), July 17, 2017
 - [Android Summit](http://www.androidsummit.org), August 24-25, 2017
 
 Visit our [events page](pages/events) for slides from past events.
