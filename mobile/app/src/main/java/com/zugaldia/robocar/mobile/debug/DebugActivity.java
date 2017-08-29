@@ -22,8 +22,8 @@ import butterknife.OnClick;
 import com.zugaldia.robocar.mobile.R;
 import com.zugaldia.robocar.mobile.controller.IntentRouter;
 import com.zugaldia.robocar.software.controller.nes30.Nes30Manager;
+import com.zugaldia.robocar.software.webserver.HTTPRequestListener;
 import com.zugaldia.robocar.software.webserver.LocalWebServer;
-import com.zugaldia.robocar.software.webserver.RequestListener;
 import com.zugaldia.robocar.software.webserver.RobocarClient;
 import com.zugaldia.robocar.software.webserver.models.RobocarMove;
 import com.zugaldia.robocar.software.webserver.models.RobocarResponse;
@@ -40,7 +40,7 @@ import retrofit2.Response;
 import timber.log.Timber;
 
 public class DebugActivity extends AppCompatActivity
-    implements NavigationView.OnNavigationItemSelectedListener, RequestListener {
+    implements NavigationView.OnNavigationItemSelectedListener, HTTPRequestListener {
 
   @BindView(R.id.button_left)
   Button buttonLeft;
