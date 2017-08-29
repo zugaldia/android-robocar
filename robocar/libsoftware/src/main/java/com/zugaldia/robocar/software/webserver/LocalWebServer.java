@@ -30,14 +30,14 @@ public class LocalWebServer extends NanoHTTPD {
   public static final String ENDPOINT_POST_MOVE = "api/move";
   public static final String ENDPOINT_POST_SPEED = "api/speed";
 
-  private RequestListener requestListener;
+  private HTTPRequestListener requestListener;
 
-  public LocalWebServer(RequestListener requestListener) {
+  public LocalWebServer(HTTPRequestListener requestListener) {
     super(8080);
     this.requestListener = requestListener;
   }
 
-  public LocalWebServer(RequestListener requestListener, int port) {
+  public LocalWebServer(HTTPRequestListener requestListener, int port) {
     super(port);
     this.requestListener = requestListener;
   }

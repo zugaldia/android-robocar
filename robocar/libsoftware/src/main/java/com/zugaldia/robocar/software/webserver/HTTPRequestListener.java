@@ -11,7 +11,7 @@ import fi.iki.elonen.NanoHTTPD;
  * Created by antonio on 4/5/17.
  */
 
-public interface RequestListener {
+public interface HTTPRequestListener {
 
   void onRequest(NanoHTTPD.IHTTPSession session);
 

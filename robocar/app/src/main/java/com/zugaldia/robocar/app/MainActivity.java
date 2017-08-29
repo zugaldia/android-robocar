@@ -5,58 +5,38 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.KeyEvent;
 
-import com.zugaldia.robocar.hardware.adafruit2348.AdafruitDcMotor;
+import com.zugaldia.robocar.app.autonomous.CameraDriver;
+import com.zugaldia.robocar.app.autonomous.TensorFlowTrainer;
+import com.zugaldia.robocar.app.manual.RCDriver;
+import com.zugaldia.robocar.app.manual.LocalhostDriver;
 import com.zugaldia.robocar.hardware.adafruit2348.AdafruitMotorHat;
-import com.zugaldia.robocar.software.camera.CameraOperator;
-import com.zugaldia.robocar.software.camera.CameraOperatorListener;
-import com.zugaldia.robocar.software.camera.SpeedOwner;
 import com.zugaldia.robocar.software.controller.nes30.Nes30Connection;
 import com.zugaldia.robocar.software.controller.nes30.Nes30Listener;
 import com.zugaldia.robocar.software.controller.nes30.Nes30Manager;
 import com.zugaldia.robocar.software.webserver.LocalWebServer;
-import com.zugaldia.robocar.software.webserver.RequestListener;
+import com.zugaldia.robocar.software.webserver.HTTPRequestListener;
 import com.zugaldia.robocar.software.webserver.models.RobocarMove;
 import com.zugaldia.robocar.software.webserver.models.RobocarResponse;
 import com.zugaldia.robocar.software.webserver.models.RobocarSpeed;
 import com.zugaldia.robocar.software.webserver.models.RobocarStatus;
 
 import java.io.IOException;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import fi.iki.elonen.NanoHTTPD;
 import timber.log.Timber;
 
-public class MainActivity extends AppCompatActivity
-    implements Nes30Listener, RequestListener, SpeedOwner, CameraOperatorListener {
-
-  // Set the speed, from 0 (off) to 255 (max speed)
-  private static final int MOTOR_SPEED = 255;
-  private static final int MOTOR_SPEED_SLOW = 95;
+public class MainActivity extends AppCompatActivity implements Nes30Listener, HTTPRequestListener {
 
   private Nes30Manager nes30Manager;
   private Nes30Connection nes30Connection;
-  private boolean isMoving = false;
 
   private AdafruitMotorHat motorHat;
-  private AdafruitDcMotor motorFrontLeft;
-  private AdafruitDcMotor motorFrontRight;
-  private AdafruitDcMotor motorBackLeft;
-  private AdafruitDcMotor motorBackRight;
 
-  //TODO: refactoring: make these into a class, maybe call it ButtonPressStates
-  private boolean isUpPressed = false;
-  private boolean isDownPressed = false;
-  private boolean isLeftPressed = false;
-  private boolean isRightPressed = false;
-  private boolean isUpOrDownPressed = false;
-  private boolean allButtonsReleased = true;
+  private RCDriver rcDriver;
+  private LocalhostDriver localhostDriver;
 
-  private CameraOperator cameraOperator;
-  private Timer timer;
-  private int cameraMode;
-  private static final int CAMERA_MODE_ONE = 1;
-  private static final int CAMERA_MODE_MULTIPLE = 2;
+  private CameraDriver cameraDriver;
+  private TensorFlowTrainer tensorFlowTrainer;
 
   // I2C Name
   public static final String I2C_DEVICE_NAME = "I2C1";
@@ -68,48 +48,20 @@ public class MainActivity extends AppCompatActivity
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    // Controller
-    nes30Manager = new Nes30Manager(this);
-
     // Motors
     motorHat = new AdafruitMotorHat(I2C_DEVICE_NAME, MOTOR_HAT_I2C_ADDRESS, false);
-    motorFrontLeft = motorHat.getMotor(1);
-    motorBackLeft = motorHat.getMotor(2);
-    motorFrontRight = motorHat.getMotor(3);
-    motorBackRight = motorHat.getMotor(4);
 
-    // Local web server
-    setupWebServer();
-
-    // NES30 BT connection
+    // Remote control (for RCDriver)
     setupBluetooth();
 
-    // Camera
-    cameraOperator = new CameraOperator(this, this, this);
+    // Local web server (for LocalhostDriver)
+    setupWebServer();
+
+    // Manual drivers (always available)
+    rcDriver = new RCDriver(motorHat);
+    localhostDriver = new LocalhostDriver(motorHat);
   }
 
-  @Override
-  public int[] getSpeeds() {
-    return new int[] {
-        motorHat.getMotor(1).getLastSpeed(),
-        motorHat.getMotor(2).getLastSpeed(),
-        motorHat.getMotor(3).getLastSpeed(),
-        motorHat.getMotor(4).getLastSpeed()};
-  }
-
-  private void setMotorSpeedsBasedOnButtonsPressed() {
-
-    boolean isLowSpeedOnLeft = isLeftPressed && isUpOrDownPressed;
-    boolean isLowSpeedOnRight = isRightPressed && isUpOrDownPressed;
-
-    int speedLeft = isLowSpeedOnLeft ? MOTOR_SPEED_SLOW : MOTOR_SPEED;
-    int speedRight = isLowSpeedOnRight ? MOTOR_SPEED_SLOW : MOTOR_SPEED;
-
-    motorFrontLeft.setSpeed(speedLeft);
-    motorBackLeft.setSpeed(speedLeft);
-    motorFrontRight.setSpeed(speedRight);
-    motorBackRight.setSpeed(speedRight);
-  }
 
   private void setupWebServer() {
     LocalWebServer localWebServer = new LocalWebServer(this);
@@ -121,6 +73,7 @@ public class MainActivity extends AppCompatActivity
   }
 
   private void setupBluetooth() {
+    nes30Manager = new Nes30Manager(this);
     nes30Connection = new Nes30Connection(this, RobocarConstants.NES30_MAC_ADDRESS);
     Timber.d("BT status: %b", nes30Connection.isEnabled());
     Timber.d("Paired devices: %d", nes30Connection.getPairedDevices().size());
@@ -136,10 +89,9 @@ public class MainActivity extends AppCompatActivity
   @Override
   protected void onDestroy() {
     super.onDestroy();
-    release();
+    rcDriver.release();
     motorHat.close();
     nes30Connection.cancelDiscovery();
-    endSession();
   }
 
   /*
@@ -166,129 +118,74 @@ public class MainActivity extends AppCompatActivity
     return nes30Manager.onKeyMultiple(keyCode, count, event);
   }
 
+  /*
+   * Implements Nes30Listener
+   */
+
   @Override
   public void onKeyPress(@Nes30Manager.ButtonCode int keyCode, boolean isDown) {
-    updateButtonPressedStates(keyCode, isDown);
-
-    if (allButtonsReleased && isMoving) {
-      isMoving = false;
-      release();
-      return;
-    }
-    // We start moving the moment the key is pressed
-    isMoving = true;
-
-    setMotorSpeedsBasedOnButtonsPressed();
-
     switch (keyCode) {
       case Nes30Manager.BUTTON_UP_CODE:
-        moveForward();
+        rcDriver.moveForward(keyCode, isDown);
         break;
       case Nes30Manager.BUTTON_DOWN_CODE:
-        moveBackward();
+        rcDriver.moveBackward(keyCode, isDown);
         break;
       case Nes30Manager.BUTTON_LEFT_CODE:
-        if (!isUpOrDownPressed) {
-          turnLeft();
-        }
+        rcDriver.turnLeft(keyCode, isDown);
         break;
       case Nes30Manager.BUTTON_RIGHT_CODE:
-        if (!isUpOrDownPressed) {
-          turnRight();
-        }
+        rcDriver.turnRight(keyCode, isDown);
         break;
       case Nes30Manager.BUTTON_X_CODE:
         if (isDown) {
           Timber.d("Starting camera session for single pics.");
-          cameraMode = CAMERA_MODE_ONE;
-          startSession();
         }
         break;
       case Nes30Manager.BUTTON_Y_CODE:
         if (isDown) {
           Timber.d("Starting camera session for multiple pics.");
-          cameraMode = CAMERA_MODE_MULTIPLE;
-          startSession();
+          if (tensorFlowTrainer == null) {
+            tensorFlowTrainer = new TensorFlowTrainer(this, motorHat);
+          }
+          tensorFlowTrainer.startSession();
         }
         break;
       case Nes30Manager.BUTTON_A_CODE:
         if (isDown) {
           Timber.d("Stopping camera session.");
-          endSession();
+          tensorFlowTrainer.endSession();
         }
+        break;
+      case Nes30Manager.BUTTON_B_CODE:
+        Timber.d("Button B pressed.");
+        break;
+      case Nes30Manager.BUTTON_L_CODE:
+        if (cameraDriver == null) {
+          cameraDriver = new CameraDriver(this, motorHat);
+        }
+        cameraDriver.start();
+        break;
+      case Nes30Manager.BUTTON_R_CODE:
+        if (cameraDriver != null) {
+          cameraDriver.stop();
+        }
+        break;
+      case Nes30Manager.BUTTON_SELECT_CODE:
+        Timber.d("Select button pressed.");
+        break;
+      case Nes30Manager.BUTTON_START_CODE:
+        Timber.d("Start button pressed.");
         break;
       case Nes30Manager.BUTTON_KONAMI:
         // Do your magic here ;-)
         break;
-      default:
-        // No action
-        break;
     }
   }
 
-  private void updateButtonPressedStates(@Nes30Manager.ButtonCode int keyCode, boolean isDown) {
-    switch (keyCode) {
-      case Nes30Manager.BUTTON_UP_CODE:
-        isUpPressed = isDown;
-        break;
-      case Nes30Manager.BUTTON_DOWN_CODE:
-        isDownPressed = isDown;
-        break;
-      case Nes30Manager.BUTTON_LEFT_CODE:
-        isLeftPressed = isDown;
-        break;
-      case Nes30Manager.BUTTON_RIGHT_CODE:
-        isRightPressed = isDown;
-        break;
-      default:
-        // No action
-        break;
-    }
-
-    isUpOrDownPressed = isUpPressed || isDownPressed;
-
-    allButtonsReleased = !(isUpPressed || isDownPressed || isLeftPressed || isRightPressed);
-  }
-
-  private void moveForward() {
-    Timber.d("Moving forward.");
-    motorFrontLeft.run(AdafruitMotorHat.FORWARD);
-    motorFrontRight.run(AdafruitMotorHat.BACKWARD);
-    motorBackLeft.run(AdafruitMotorHat.BACKWARD);
-    motorBackRight.run(AdafruitMotorHat.FORWARD);
-  }
-
-  private void moveBackward() {
-    Timber.d("Moving backward.");
-    motorFrontLeft.run(AdafruitMotorHat.BACKWARD);
-    motorFrontRight.run(AdafruitMotorHat.FORWARD);
-    motorBackLeft.run(AdafruitMotorHat.FORWARD);
-    motorBackRight.run(AdafruitMotorHat.BACKWARD);
-  }
-
-  private void turnLeft() {
-    Timber.d("Turning left.");
-    motorFrontLeft.run(AdafruitMotorHat.BACKWARD);
-    motorFrontRight.run(AdafruitMotorHat.BACKWARD);
-    motorBackLeft.run(AdafruitMotorHat.FORWARD);
-    motorBackRight.run(AdafruitMotorHat.FORWARD);
-  }
-
-  private void turnRight() {
-    Timber.d("Turning right.");
-    motorFrontLeft.run(AdafruitMotorHat.FORWARD);
-    motorFrontRight.run(AdafruitMotorHat.FORWARD);
-    motorBackLeft.run(AdafruitMotorHat.BACKWARD);
-    motorBackRight.run(AdafruitMotorHat.BACKWARD);
-  }
-
-  private void release() {
-    Timber.d("Release.");
-    motorFrontLeft.run(AdafruitMotorHat.RELEASE);
-    motorFrontRight.run(AdafruitMotorHat.RELEASE);
-    motorBackLeft.run(AdafruitMotorHat.RELEASE);
-    motorBackRight.run(AdafruitMotorHat.RELEASE);
-  }
+  /*
+   * Implement RequestListener (web server)
+   */
 
   @Override
   public void onRequest(NanoHTTPD.IHTTPSession session) {
@@ -310,42 +207,8 @@ public class MainActivity extends AppCompatActivity
     if (speed == null) {
       return new RobocarResponse(400, "Bad Request");
     }
-    RobocarSpeedChanger speedChanger = new RobocarSpeedChanger(
-        motorFrontLeft, motorFrontRight, motorBackLeft, motorBackRight);
-    speedChanger.changeSpeed(speed);
+
+    localhostDriver.changeSpeed(speed);
     return new RobocarResponse(200, "OK");
-  }
-
-  private void startSession() {
-    if (!cameraOperator.isInSession()) {
-      cameraOperator.startSession();
-    } else if (cameraMode == CAMERA_MODE_ONE) {
-      sessionStarted();
-    }
-  }
-
-  @Override
-  public void sessionStarted() {
-    switch (cameraMode) {
-      case CAMERA_MODE_ONE:
-        cameraOperator.takePicture();
-        break;
-      case CAMERA_MODE_MULTIPLE:
-        timer = new Timer("CAMERA_TRAINING");
-        timer.schedule(new TimerTask() {
-          @Override
-          public void run() {
-            cameraOperator.takePicture();
-          }
-        }, 0, 250); // 0 delay, 250 period
-        break;
-    }
-  }
-
-  private void endSession() {
-    if (timer != null) {
-      timer.cancel();
-    }
-    cameraOperator.endSession();
   }
 }

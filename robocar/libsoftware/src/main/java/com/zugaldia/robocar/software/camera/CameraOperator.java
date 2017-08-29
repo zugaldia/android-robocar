@@ -21,10 +21,8 @@ import android.view.Surface;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.UUID;
 
 import timber.log.Timber;
 
@@ -35,23 +33,20 @@ import timber.log.Timber;
  * in external storage for easier access.
  */
 
-public class CameraOperator implements
-    SessionCallback.SessionCallbackListener,
-    ImageReader.OnImageAvailableListener {
+public class CameraOperator implements SessionCallback.SessionCallbackListener {
+
+  public static SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.US);
+  public static final String ROBOCAR_FOLDER = "robocar";
 
   private static final int CAMERA_INDEX = 0;
   private static final int IMAGE_WIDTH = 320;
   private static final int IMAGE_HEIGHT = 240;
   private static final int IMAGE_FORMAT = ImageFormat.JPEG;
   private static final int MAX_IMAGES = 5;
-  private static final String ROBOCAR_FOLDER = "robocar";
-  private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.US);
 
   private CameraOperatorListener listener;
-  private SpeedOwner speedOwner;
 
   private boolean inSession;
-  private File root;
   private boolean autofocusSupported = false;
 
   private DeviceCallback deviceCallback;
@@ -62,13 +57,10 @@ public class CameraOperator implements
   private Handler backgroundHandler;
 
   private ImageReader imageReader;
-  private String sessionId;
-  private int sessionCount;
 
-  public CameraOperator(Context context, CameraOperatorListener listener, SpeedOwner speedOwner) {
+  public CameraOperator(Context context, CameraOperatorListener listener) {
     Timber.d("Building camera training object.");
     this.listener = listener;
-    this.speedOwner = speedOwner;
 
     try {
       init(context);
@@ -93,7 +85,7 @@ public class CameraOperator implements
       return;
     }
 
-    root = ImageSaver.getRoot(ROBOCAR_FOLDER);
+    File root = ImageSaver.getRoot(ROBOCAR_FOLDER);
     if (root == null) {
       Timber.e("Failed to create destination folder.");
       return;
@@ -147,7 +139,7 @@ public class CameraOperator implements
     }
   }
 
-  public void startSession() {
+  public void startSession(ImageReader.OnImageAvailableListener onImageAvailableListener) {
     Timber.d("Starting a session.");
     if (inSession) {
       Timber.d("Session already started, end it first.");
@@ -161,7 +153,7 @@ public class CameraOperator implements
     }
 
     imageReader = ImageReader.newInstance(IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_FORMAT, MAX_IMAGES);
-    imageReader.setOnImageAvailableListener(this, backgroundHandler);
+    imageReader.setOnImageAvailableListener(onImageAvailableListener, backgroundHandler);
     List<Surface> outputs = Collections.singletonList(imageReader.getSurface());
     sessionCallback = new SessionCallback(this);
     try {
@@ -170,9 +162,6 @@ public class CameraOperator implements
     } catch (CameraAccessException e) {
       Timber.e(e, "Failed to start a camera session.");
     }
-
-    sessionId = UUID.randomUUID().toString().replace("-", "");
-    sessionCount = 0;
   }
 
   public void takePicture() {
@@ -235,21 +224,6 @@ public class CameraOperator implements
     Timber.d("Session configured.");
     inSession = true;
     listener.sessionStarted();
-  }
-
-  /**
-   * This method indicates we got an image from the camera.
-   */
-  @Override
-  public void onImageAvailable(ImageReader reader) {
-    Timber.d("Image available.");
-    String timestamp = dateFormat.format(new Date());
-    int[] speeds = speedOwner.getSpeeds();
-    String speedState = String.format(Locale.US, "%d-%d-%d-%d",
-        speeds[0], speeds[1], speeds[2], speeds[3]);
-    String filename = String.format(Locale.US, "robocar-%s-%d-%s-%s.jpg",
-        sessionId, sessionCount++, timestamp, speedState);
-    backgroundHandler.post(new ImageSaver(reader.acquireLatestImage(), root, filename));
   }
 
   /**
