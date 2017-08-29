@@ -1,4 +1,4 @@
-package com.zugaldia.robocar.app;
+package com.zugaldia.robocar.app.manual;
 
 import com.zugaldia.robocar.hardware.adafruit2348.AdafruitDcMotor;
 import com.zugaldia.robocar.hardware.adafruit2348.AdafruitMotorHat;
@@ -8,8 +8,7 @@ import com.zugaldia.robocar.software.webserver.models.RobocarSpeed;
 /**
  * Created by Halim.Salameh on 5/9/2017.
  */
-
-class RobocarSpeedChanger {
+public class RobocarSpeedChanger {
 
   // If speed was set too low, the motor could burn.
   private static final int MIN_SPEED = 64;
@@ -19,16 +18,11 @@ class RobocarSpeedChanger {
   private AdafruitDcMotor motorBackLeft;
   private AdafruitDcMotor motorBackRight;
 
-  public RobocarSpeedChanger(
-      AdafruitDcMotor motorFrontLeft,
-      AdafruitDcMotor motorFrontRight,
-      AdafruitDcMotor motorBackLeft,
-      AdafruitDcMotor motorBackRight) {
-
-    this.motorFrontLeft = motorFrontLeft;
-    this.motorFrontRight = motorFrontRight;
-    this.motorBackLeft = motorBackLeft;
-    this.motorBackRight = motorBackRight;
+  public RobocarSpeedChanger(AdafruitMotorHat motorHat) {
+    motorFrontLeft = motorHat.getMotor(1);
+    motorBackLeft = motorHat.getMotor(2);
+    motorFrontRight = motorHat.getMotor(3);
+    motorBackRight = motorHat.getMotor(4);
   }
 
   public void changeSpeed(RobocarSpeed speed) {
