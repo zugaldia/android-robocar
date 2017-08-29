@@ -6,9 +6,9 @@ import com.zugaldia.robocar.software.webserver.models.RobocarResponse;
 import com.zugaldia.robocar.software.webserver.models.RobocarSpeed;
 
 /**
- * Created by Halim.Salameh on 5/9/2017.
+ * Drives the Robocar using localhost (invoked by the companion app).
  */
-public class RobocarSpeedChanger {
+public class LocalhostDriver {
 
   // If speed was set too low, the motor could burn.
   private static final int MIN_SPEED = 64;
@@ -18,7 +18,7 @@ public class RobocarSpeedChanger {
   private AdafruitDcMotor motorBackLeft;
   private AdafruitDcMotor motorBackRight;
 
-  public RobocarSpeedChanger(AdafruitMotorHat motorHat) {
+  public LocalhostDriver(AdafruitMotorHat motorHat) {
     motorFrontLeft = motorHat.getMotor(1);
     motorBackLeft = motorHat.getMotor(2);
     motorFrontRight = motorHat.getMotor(3);
@@ -26,7 +26,6 @@ public class RobocarSpeedChanger {
   }
 
   public void changeSpeed(RobocarSpeed speed) {
-
     if (speed.getLeft() != null) {
       setLeftSpeed(speed.getLeft());
     }
@@ -37,7 +36,6 @@ public class RobocarSpeedChanger {
   }
 
   public void setLeftSpeed(int speed) {
-
     int unsignedSpeed = Math.abs(speed);
     if (unsignedSpeed < MIN_SPEED) {
       unsignedSpeed = 0;
@@ -56,7 +54,6 @@ public class RobocarSpeedChanger {
   }
 
   public void setRightSpeed(int speed) {
-
     int unsignedSpeed = Math.abs(speed);
     if (unsignedSpeed < MIN_SPEED) {
       unsignedSpeed = 0;
@@ -65,13 +62,14 @@ public class RobocarSpeedChanger {
     motorBackRight.setSpeed(unsignedSpeed);
     motorFrontRight.setSpeed(unsignedSpeed);
 
-    if (speed > 0) { // Positive speed motor directions
+    if (speed > 0) {
+      // Positive speed motor directions
       motorFrontRight.run(AdafruitMotorHat.BACKWARD);
       motorBackRight.run(AdafruitMotorHat.FORWARD);
-    } else { // Negative speed motor directions
+    } else {
+      // Negative speed motor directions
       motorFrontRight.run(AdafruitMotorHat.FORWARD);
       motorBackRight.run(AdafruitMotorHat.BACKWARD);
     }
-
   }
 }
