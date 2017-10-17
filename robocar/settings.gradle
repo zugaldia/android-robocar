@@ -1,1 +1,1 @@
-include ':app', ':libhardware', ':libsoftware', ':libcv'
+include ':app', ':libhardware', ':libsoftware', ':libcv', ':libsunfounderpca9685'
