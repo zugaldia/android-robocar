@@ -124,6 +124,7 @@ public class MainActivity extends AppCompatActivity implements Nes30Listener, HT
 
   @Override
   public void onKeyPress(@Nes30Manager.ButtonCode int keyCode, boolean isDown) {
+    Timber.d("keyCode: %d", keyCode);
     switch (keyCode) {
       case Nes30Manager.BUTTON_UP_CODE:
         rcDriver.moveForward(keyCode, isDown);
@@ -161,14 +162,20 @@ public class MainActivity extends AppCompatActivity implements Nes30Listener, HT
         Timber.d("Button B pressed.");
         break;
       case Nes30Manager.BUTTON_L_CODE:
-        if (cameraDriver == null) {
-          cameraDriver = new CameraDriver(this, motorHat);
+      case 102:
+        if (isDown) {
+          if (cameraDriver == null) {
+            cameraDriver = new CameraDriver(this, motorHat);
+          }
+          cameraDriver.start();
         }
-        cameraDriver.start();
         break;
       case Nes30Manager.BUTTON_R_CODE:
-        if (cameraDriver != null) {
-          cameraDriver.stop();
+      case 103:
+        if (isDown) {
+          if (cameraDriver != null) {
+            cameraDriver.stop();
+          }
         }
         break;
       case Nes30Manager.BUTTON_SELECT_CODE:

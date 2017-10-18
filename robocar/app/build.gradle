@@ -44,10 +44,14 @@ dependencies {
     // Our shared libraries
     compile project(':libhardware')
     compile project(':libsoftware')
-    //compile project(':libcv')
+    compile project(':libcv')
 
     // Android Support Libraries
     compile 'com.android.support:appcompat-v7:25.3.1'
+
+    // Relinker
+    // https://github.com/bytedeco/javacpp-presets/wiki/The-UnsatisfiedLinkError-X-File-(a-real-experience)
+    compile 'com.getkeepsafe.relinker:relinker:1.2.2'
 
     // Testing
     testCompile 'junit:junit:4.12'
