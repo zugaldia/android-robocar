@@ -59,22 +59,23 @@ public class RCDriver {
     allButtonsReleased = !(isUpPressed || isDownPressed || isLeftPressed || isRightPressed);
   }
 
-  private void preCheck(@Nes30Manager.ButtonCode int keyCode, boolean isDown) {
+  private boolean preCheck(@Nes30Manager.ButtonCode int keyCode, boolean isDown) {
     updateButtonPressedStates(keyCode, isDown);
     if (allButtonsReleased && isMoving) {
-      isMoving = false;
+      // Stop
       release();
-      return;
+      isMoving = false;
+    } else {
+      // We start moving the moment the key is pressed
+      setMotorSpeedsBasedOnButtonsPressed();
+      isMoving = true;
     }
 
-    // We start moving the moment the key is pressed
-    isMoving = true;
-
-    setMotorSpeedsBasedOnButtonsPressed();
+    return isMoving;
   }
 
   public void moveForward(@Nes30Manager.ButtonCode int keyCode, boolean isDown) {
-    preCheck(keyCode, isDown);
+    if (!preCheck(keyCode, isDown)) return;
 
     Timber.d("Moving forward.");
     motorFrontLeft.run(AdafruitMotorHat.FORWARD);
@@ -84,7 +85,7 @@ public class RCDriver {
   }
 
   public void moveBackward(@Nes30Manager.ButtonCode int keyCode, boolean isDown) {
-    preCheck(keyCode, isDown);
+    if (!preCheck(keyCode, isDown)) return;
 
     Timber.d("Moving backward.");
     motorFrontLeft.run(AdafruitMotorHat.BACKWARD);
@@ -94,10 +95,8 @@ public class RCDriver {
   }
 
   public void turnLeft(@Nes30Manager.ButtonCode int keyCode, boolean isDown) {
-    preCheck(keyCode, isDown);
-    if (isUpOrDownPressed) {
-      return;
-    }
+    if (!preCheck(keyCode, isDown)) return;
+    if (isUpOrDownPressed) return;
 
     Timber.d("Turning left.");
     motorFrontLeft.run(AdafruitMotorHat.BACKWARD);
@@ -107,10 +106,8 @@ public class RCDriver {
   }
 
   public void turnRight(@Nes30Manager.ButtonCode int keyCode, boolean isDown) {
-    preCheck(keyCode, isDown);
-    if (isUpOrDownPressed) {
-      return;
-    }
+    if (!preCheck(keyCode, isDown)) return;
+    if (isUpOrDownPressed) return;
 
     Timber.d("Turning right.");
     motorFrontLeft.run(AdafruitMotorHat.FORWARD);
