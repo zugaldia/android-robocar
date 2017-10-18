@@ -69,7 +69,7 @@ This is what you need to put together a basic Robocar:
 
 ### Next: Put it all together
 
-[Continue reading.](pages/build)
+[Continue reading.](build)
 
 ---
 
